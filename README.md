@@ -2,12 +2,37 @@
 
 A desktop application for Pre-Sales professionals to calculate commission payouts on individual won deals. Built with Electron for Windows (.exe) and macOS (.dmg).
 
-No installation required — download the portable executable and run it. No internet connection, accounts, or dependencies needed.
+No internet connection, accounts, or dependencies needed after installation.
 
 ## Download
 
-- **Windows:** Download the `.exe` from the [latest release](../../releases/latest) — portable, no installer needed
-- **macOS:** Download the `.dmg` from the [latest release](../../releases/latest)
+| Platform | Download | Notes |
+|----------|----------|-------|
+| **Windows** | [Pre-Sales-Compensation-Calculator-Setup-1.0.0.exe](https://github.com/earnstaf/SE-Compensation-Calculator/releases/download/v1.0.0/Pre-Sales-Compensation-Calculator-Setup-1.0.0.exe) | NSIS installer, auto-updates on future releases |
+| **macOS (dmg)** | [Pre-Sales-Compensation-Calculator-1.0.0-arm64.dmg](https://github.com/earnstaf/SE-Compensation-Calculator/releases/download/v1.0.0/Pre-Sales-Compensation-Calculator-1.0.0-arm64.dmg) | Drag to Applications |
+| **macOS (zip)** | [Pre-Sales-Compensation-Calculator-1.0.0-arm64-mac.zip](https://github.com/earnstaf/SE-Compensation-Calculator/releases/download/v1.0.0/Pre-Sales-Compensation-Calculator-1.0.0-arm64-mac.zip) | Extract and run |
+
+All downloads also available on the [Releases page](../../releases/latest).
+
+### macOS Installation Note
+
+The app is not yet code-signed with an Apple Developer certificate. macOS Gatekeeper will block it with a message saying the app "is damaged and can't be opened." This is a false positive — the app is safe.
+
+**To fix this, run the following command in Terminal after installing:**
+
+If you installed from the `.dmg` (dragged to Applications):
+```bash
+xattr -cr "/Applications/Pre-Sales Compensation Calculator.app"
+```
+
+If you extracted from the `.zip` (default Downloads folder):
+```bash
+xattr -cr ~/Downloads/Pre-Sales\ Compensation\ Calculator-1.0.0-arm64-mac/Pre-Sales\ Compensation\ Calculator.app
+```
+
+> **What does this do?** The `xattr -cr` command removes the macOS quarantine attribute that gets added to files downloaded from the internet. This is the same attribute Gatekeeper checks before allowing an app to launch. The `-c` flag clears all extended attributes and `-r` applies it recursively to the `.app` bundle.
+
+After running the command, the app will open normally. You only need to do this once.
 
 ## What This App Does
 
@@ -146,4 +171,4 @@ PSA uplift values have not been finalized. Select your PSA team and enter the up
 This calculator operates on a single deal against a single measure. Use your M1 (primary measure) uplift values, which are the defaults for US & Canada, EMEA, and ISE - EMEA teams. An annual calculator with full M1/M2 support is planned for a future release.
 
 **Q: Does the app store any data?**
-No. All inputs reset when you close the app. Nothing is saved to disk or transmitted over the network.
+Your Team selection, OTE, NARR Quota, and NARR Quota Credit are saved locally between sessions so you don't have to re-enter them each time. This data is stored in a JSON file in your system's app data folder and is never transmitted over the network. Deal-specific inputs (IARR, Renewed ARR, NARR, toggles) reset when you close the app.
