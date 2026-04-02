@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pre-Sales Compensation Calculator</title>
+  <link rel="icon" href="assets/icon.png">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <noscript>This calculator requires JavaScript to run.</noscript>
+  <div class="app">
+    <header class="app-header">
+      <h1>Pre-Sales Compensation Calculator</h1>
+      <div class="header-actions">
+        <div class="team-selector">
+          <label class="team-selector-label" for="team-select">Team</label>
+          <select id="team-select">
+            <option value="custom">Custom</option>
+            <option value="apac">APAC</option>
+            <option value="emea">EMEA</option>
+            <option value="gee-ve">GEE-VE Strategists</option>
+            <option value="ise-emea">ISE - EMEA</option>
+            <option value="ise-mm-commercial">ISE - MM/Commercial</option>
+            <option value="ise-pubsec">ISE - PubSec</option>
+            <option value="japan">Japan</option>
+            <option value="latam">LATAM</option>
+            <option value="mm-commercial">MM/Commercial</option>
+            <option value="psa-gsi-spa">PSA - GSI &amp; SPA</option>
+            <option value="psa-hybrid">PSA - Hybrid</option>
+            <option value="psa-msp">PSA - MSP</option>
+            <option value="us-canada">US &amp; Canada (excl Fed)</option>
+            <option value="us-pubsec">US PubSec</option>
+          </select>
+        </div>
+        <div class="scenarios-bar">
+          <button class="scenario-btn" data-scenario="upsell-existing" title="Upsell to existing customer, no churn, below 100% attainment.">Upsell Existing</button>
+          <button class="scenario-btn" data-scenario="upsell-churn" title="Upsell where the customer churns a module. CARR shown for context only.">Upsell with Churn</button>
+          <button class="scenario-btn" data-scenario="new-logo-overachieve" title="New logo multi-year deal that pushes past 100% attainment, triggering accelerated PCR.">New Logo + Multi-Year</button>
+          <button class="scenario-btn" data-scenario="new-logo" title="New logo deal, below 100% attainment. New Logo Uplift applies.">New Logo Only</button>
+        </div>
+        <button class="btn btn-compare" id="btn-compare">Compare Deals</button>
+        <button class="btn btn-danger" id="btn-reset">Clear</button>
+      </div>
+    </header>
+
+    <div class="input-panels">
+      <!-- SE Profile Section -->
+      <div class="section">
+        <div class="section-title">User Profile</div>
+        <div class="field-grid">
+          <div class="field">
+            <label class="field-label">
+              OTE
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">On-Target Earnings. Total annual compensation (salary + variable) if quota is fully met.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="ote" class="has-prefix" data-currency>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">
+              Salary
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Fixed base pay. Always 80% of OTE. Auto-calculated.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="salary" class="has-prefix computed" readonly tabindex="-1">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">
+              OTV
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">On-Target Variable. The commission portion of OTE. Always 20% of OTE. Auto-calculated.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="otv" class="has-prefix computed" readonly tabindex="-1">
+            </div>
+          </div>
+
+          <!-- Dual-Measure Toggle (visible only for Custom team) -->
+          <div class="field field-hidden" id="dual-measure-toggle-field">
+            <label class="field-label">
+              Dual-Measure
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Enable dual-measure mode. OTV is split across two quotas, each with independent PCR and uplift rates.</span>
+              </span>
+            </label>
+            <div class="toggle-field">
+              <div class="toggle" id="dual-measure-toggle" role="switch" aria-checked="false" tabindex="0"></div>
+              <span class="toggle-label" id="dual-measure-label">Off</span>
+            </div>
+          </div>
+
+          <!-- Custom measure labels (visible only for Custom team with dual-measure on) -->
+          <div class="field dual-measure-only custom-dm-only field-full" id="custom-labels-row">
+            <div class="dm-quota-row dm-custom-labels-row">
+              <div class="dm-quota-cell">
+                <label class="field-label">Primary Measure Label</label>
+                <div class="input-wrap">
+                  <input type="text" id="primary-label-input" value="Primary">
+                </div>
+              </div>
+              <div class="dm-quota-cell">
+                <label class="field-label">Secondary Measure Label</label>
+                <div class="input-wrap">
+                  <input type="text" id="secondary-label-input" value="Secondary">
+                </div>
+              </div>
+              <div class="dm-quota-cell">
+                <label class="field-label">
+                  OTV Split
+                  <span class="tooltip-trigger">&#9432;
+                    <span class="tooltip-content">Percentage of OTV allocated to each measure. Must total 100%. Default is 80/20.</span>
+                  </span>
+                </label>
+                <div class="dm-split-inputs">
+                  <div class="input-wrap dm-split-wrap">
+                    <input type="text" id="primary-split-input" value="80" class="has-suffix">
+                    <span class="input-suffix">%</span>
+                  </div>
+                  <span class="dm-split-slash">/</span>
+                  <div class="input-wrap dm-split-wrap">
+                    <input type="text" id="secondary-split-input" value="20" class="has-suffix">
+                    <span class="input-suffix">%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Single-measure fields (shown when dual-measure is off) -->
+          <div class="field single-measure-only" id="narr-quota-field">
+            <label class="field-label">
+              NARR Quota
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Annual Net ARR quota target assigned to the SE. The total NARR you must retire to hit 100% attainment.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="narr-quota" class="has-prefix" data-currency>
+            </div>
+          </div>
+          <div class="field single-measure-only" id="pcr-field">
+            <label class="field-label">
+              PCR
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Per-Commission Rate. Base rate earned per dollar of NARR. Calculated as OTV / NARR Quota.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <input type="text" id="pcr" class="computed" readonly tabindex="-1">
+            </div>
+          </div>
+          <div class="field single-measure-only" id="narr-quota-credit-field">
+            <label class="field-label">
+              NARR Quota Credit
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Cumulative NARR retired year-to-date across all prior deals, before this deal. Used to determine current quota attainment.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="narr-quota-credit" class="has-prefix" data-currency>
+            </div>
+          </div>
+          <div class="field single-measure-only" id="narr-attainment-field">
+            <label class="field-label">
+              NARR Quota Attainment
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Current quota attainment percentage before this deal. Calculated as NARR Quota Credit / NARR Quota.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <input type="text" id="narr-attainment" class="computed has-suffix" readonly tabindex="-1">
+              <span class="input-suffix">%</span>
+            </div>
+          </div>
+
+          <!-- Dual-measure fields (shown when dual-measure is on) -->
+          <div class="field dual-measure-only field-full" id="dm-l3-row">
+            <div class="dm-quota-row">
+              <div class="dm-quota-cell">
+                <label class="field-label">
+                  <span class="dm-primary-label">L3</span> NARR Quota
+                  <span class="tooltip-trigger">&#9432;
+                    <span class="tooltip-content dm-primary-tooltip">Primary measure NARR quota target.</span>
+                  </span>
+                </label>
+                <div class="input-wrap">
+                  <span class="input-prefix">$</span>
+                  <input type="text" id="l3-narr-quota" class="has-prefix" data-currency>
+                </div>
+              </div>
+              <div class="dm-quota-cell">
+                <label class="field-label">
+                  <span class="dm-primary-label">L3</span> Quota Credit
+                  <span class="tooltip-trigger">&#9432;
+                    <span class="tooltip-content">Cumulative NARR retired YTD within your primary measure, before this deal.</span>
+                  </span>
+                </label>
+                <div class="input-wrap">
+                  <span class="input-prefix">$</span>
+                  <input type="text" id="l3-narr-quota-credit" class="has-prefix" data-currency>
+                </div>
+              </div>
+              <div class="dm-quota-cell">
+                <label class="field-label"><span class="dm-primary-label">L3</span> Attainment</label>
+                <div class="input-wrap">
+                  <input type="text" id="l3-attainment" class="computed has-suffix" readonly tabindex="-1">
+                  <span class="input-suffix">%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="field dual-measure-only field-full" id="dm-l2-row">
+            <div class="dm-quota-row">
+              <div class="dm-quota-cell">
+                <label class="field-label">
+                  <span class="dm-secondary-label">L2</span> NARR Quota
+                  <span class="tooltip-trigger">&#9432;
+                    <span class="tooltip-content dm-secondary-tooltip">Secondary measure NARR quota target.</span>
+                  </span>
+                </label>
+                <div class="input-wrap">
+                  <span class="input-prefix">$</span>
+                  <input type="text" id="l2-narr-quota" class="has-prefix" data-currency>
+                </div>
+              </div>
+              <div class="dm-quota-cell">
+                <label class="field-label">
+                  <span class="dm-secondary-label">L2</span> Quota Credit
+                  <span class="tooltip-trigger">&#9432;
+                    <span class="tooltip-content">Cumulative NARR retired YTD within your secondary measure, before this deal.</span>
+                  </span>
+                </label>
+                <div class="input-wrap">
+                  <span class="input-prefix">$</span>
+                  <input type="text" id="l2-narr-quota-credit" class="has-prefix" data-currency>
+                </div>
+              </div>
+              <div class="dm-quota-cell">
+                <label class="field-label"><span class="dm-secondary-label">L2</span> Attainment</label>
+                <div class="input-wrap">
+                  <input type="text" id="l2-attainment" class="computed has-suffix" readonly tabindex="-1">
+                  <span class="input-suffix">%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="field dual-measure-only">
+            <label class="field-label"><span class="dm-primary-label">L3</span> PCR</label>
+            <div class="input-wrap">
+              <input type="text" id="l3-pcr" class="computed" readonly tabindex="-1">
+            </div>
+          </div>
+          <div class="field dual-measure-only">
+            <label class="field-label"><span class="dm-secondary-label">L2</span> PCR</label>
+            <div class="input-wrap">
+              <input type="text" id="l2-pcr" class="computed" readonly tabindex="-1">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Uplift Rates Section -->
+      <div class="section">
+        <div class="section-title">Uplift Rates</div>
+        <div class="psa-pending-note field-hidden" id="psa-pending-note">Uplift values for this team are pending. Enter values manually.</div>
+
+        <!-- Single-measure uplift layout -->
+        <div class="field-grid single-measure-only" id="uplift-single">
+          <div class="field">
+            <label class="field-label">
+              New Logo Uplift
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Additive modifier applied when the deal is a new logo (no existing contract). Only applies when New Logo toggle is on.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <input type="text" id="new-logo-uplift" value="0.0005">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">
+              Multi-Year Uplift
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Additive modifier applied when the deal is a multi-year contract (3+ years). Only applies when Multi-Year toggle is on.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <input type="text" id="multi-year-uplift" value="0.0005">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">
+              Accelerated PCR
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Additive modifier applied only to NARR that exceeds 100% quota attainment. Triggers the accelerator on overachievement.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <input type="text" id="accelerated-pcr" value="0.0025">
+            </div>
+          </div>
+          <div class="field field-hidden" id="rarr-rate-field">
+            <label class="field-label">
+              RARR Rate
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Bonus commission rate applied to Renewed ARR. Paid on top of standard NARR-based commission.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <input type="text" id="rarr-rate" value="0.001">
+            </div>
+          </div>
+        </div>
+
+        <!-- Dual-measure uplift layout -->
+        <div class="dm-uplift-grid dual-measure-only" id="uplift-dual">
+          <div class="dm-uplift-header">
+            <div class="dm-uplift-label"></div>
+            <div class="dm-uplift-col-header dm-primary-label">L3</div>
+            <div class="dm-uplift-col-header dm-secondary-label">L2</div>
+          </div>
+          <div class="dm-uplift-row">
+            <div class="dm-uplift-label">
+              <label class="field-label">
+                New Logo Uplift
+                <span class="tooltip-trigger">&#9432;
+                  <span class="tooltip-content">Additive modifier applied when the deal is a new logo. L3 and L2 have independent uplift values.</span>
+                </span>
+              </label>
+            </div>
+            <div class="dm-uplift-cell">
+              <div class="input-wrap">
+                <input type="text" id="l3-new-logo-uplift" value="0.00045">
+              </div>
+            </div>
+            <div class="dm-uplift-cell">
+              <div class="input-wrap">
+                <input type="text" id="l2-new-logo-uplift" value="0.00005">
+              </div>
+            </div>
+          </div>
+          <div class="dm-uplift-row" id="dm-multi-year-row">
+            <div class="dm-uplift-label">
+              <label class="field-label">
+                Multi-Year Uplift
+                <span class="tooltip-trigger">&#9432;
+                  <span class="tooltip-content">Additive modifier applied for multi-year contracts. L3 and L2 have independent uplift values.</span>
+                </span>
+              </label>
+            </div>
+            <div class="dm-uplift-cell">
+              <div class="input-wrap">
+                <input type="text" id="l3-multi-year-uplift" value="0.00045">
+              </div>
+            </div>
+            <div class="dm-uplift-cell">
+              <div class="input-wrap">
+                <input type="text" id="l2-multi-year-uplift" value="0.00005">
+              </div>
+            </div>
+          </div>
+          <div class="dm-uplift-row">
+            <div class="dm-uplift-label">
+              <label class="field-label">
+                Accelerated PCR
+                <span class="tooltip-trigger">&#9432;
+                  <span class="tooltip-content">Additive modifier applied only to NARR above 100% attainment. Each measure has its own accelerated rate.</span>
+                </span>
+              </label>
+            </div>
+            <div class="dm-uplift-cell">
+              <div class="input-wrap">
+                <input type="text" id="l3-accelerated-pcr" value="0.002">
+              </div>
+            </div>
+            <div class="dm-uplift-cell">
+              <div class="input-wrap">
+                <input type="text" id="l2-accelerated-pcr" value="0.0005">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Deal Details Section -->
+      <div class="section">
+        <div class="section-title">Deal Details</div>
+        <div class="field-grid">
+          <div class="field">
+            <label class="field-label">
+              IARR
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Incumbent ARR. The ARR on the customer's expiring contract. Set to zero for new logos.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="iarr" class="has-prefix" data-currency value="0">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">
+              Renewed ARR
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">ARR being renewed on the new opportunity. The portion of IARR that carries over. Zero for new logos.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="renewed-arr" class="has-prefix" data-currency value="0">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">
+              CARR
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Churned ARR. Module or license churn from the expiring contract. Informational only — NOT used in the NARR or commission calculation.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="carr" class="has-prefix" data-currency value="0">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">
+              NARR
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Net new ARR on this deal (new modules or new logo ARR). Combined with Renewed ARR to form Day 1 ARR.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="new-module-arr" class="has-prefix" data-currency>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">
+              New Logo
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Toggle on if this is a new logo deal (no existing contract). When enabled, New Logo Uplift is added to the commission rate.</span>
+              </span>
+            </label>
+            <div class="toggle-field">
+              <div class="toggle" id="new-logo-toggle" role="switch" aria-checked="false" tabindex="0"></div>
+              <span class="toggle-label" id="new-logo-label">No</span>
+            </div>
+          </div>
+          <div class="field" id="multi-year-field">
+            <label class="field-label">
+              Multi-Year
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Toggle on if this is a 3+ year contract. When enabled, Multi-Year Uplift is added to the commission rate.</span>
+              </span>
+            </label>
+            <div class="toggle-field">
+              <div class="toggle" id="multi-year-toggle" role="switch" aria-checked="false" tabindex="0"></div>
+              <span class="toggle-label" id="multi-year-label">No</span>
+            </div>
+          </div>
+          <div class="field dual-measure-only" id="l3-region-field">
+            <label class="field-label">
+              <span id="l3-region-toggle-label">Deal is within my L3 region</span>
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content" id="l3-region-tooltip">When on, this deal earns commission on both measures (primary rolls up to secondary). When off, commission is earned on secondary measure only.</span>
+              </span>
+            </label>
+            <div class="toggle-field">
+              <div class="toggle active" id="l3-region-toggle" role="switch" aria-checked="true" tabindex="0"></div>
+              <span class="toggle-label" id="l3-region-label">Yes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Deal B Section (Comparison Mode) -->
+      <div class="section field-hidden" id="deal-b-section">
+        <div class="section-title">Deal B</div>
+        <div class="field-grid">
+          <div class="field">
+            <label class="field-label">IARR</label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="b-iarr" class="has-prefix" data-currency value="0">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">Renewed ARR</label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="b-renewed-arr" class="has-prefix" data-currency value="0">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">CARR</label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="b-carr" class="has-prefix" data-currency value="0">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">NARR</label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="b-new-module-arr" class="has-prefix" data-currency>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label" id="b-new-logo-field-label">New Logo</label>
+            <div class="toggle-field">
+              <div class="toggle" id="b-new-logo-toggle" role="switch" aria-checked="false" tabindex="0"></div>
+              <span class="toggle-label" id="b-new-logo-label">No</span>
+            </div>
+          </div>
+          <div class="field" id="b-multi-year-field">
+            <label class="field-label">Multi-Year</label>
+            <div class="toggle-field">
+              <div class="toggle" id="b-multi-year-toggle" role="switch" aria-checked="false" tabindex="0"></div>
+              <span class="toggle-label" id="b-multi-year-label">No</span>
+            </div>
+          </div>
+          <div class="field dual-measure-only" id="b-l3-region-field">
+            <label class="field-label">
+              <span id="b-l3-region-toggle-label">Deal is within my L3 region</span>
+            </label>
+            <div class="toggle-field">
+              <div class="toggle active" id="b-l3-region-toggle" role="switch" aria-checked="true" tabindex="0"></div>
+              <span class="toggle-label" id="b-l3-region-label">Yes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Panel -->
+    <div class="results-panel">
+      <div class="results-header">
+        <div class="results-title">Commission Breakdown</div>
+        <div class="results-actions">
+          <label class="obfuscate-toggle" title="When checked, PCR values are hidden in the exported output">
+            <input type="checkbox" id="obfuscate-toggle">
+            <span>Hide PCR</span>
+          </label>
+          <button class="btn-icon" id="btn-copy" title="Copy to clipboard" disabled>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5.5" y="5.5" width="8" height="9" rx="1.5"/>
+              <path d="M10.5 5.5V3a1.5 1.5 0 00-1.5-1.5H4A1.5 1.5 0 002.5 3v7A1.5 1.5 0 004 11.5h1.5"/>
+            </svg>
+          </button>
+          <button class="btn-icon" id="btn-export-pdf" title="Export PDF" disabled>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 1.5H4A1.5 1.5 0 002.5 3v10A1.5 1.5 0 004 14.5h8a1.5 1.5 0 001.5-1.5V6.5L9 1.5z"/>
+              <polyline points="9,1.5 9,6.5 13.5,6.5"/>
+              <line x1="8" y1="9.5" x2="8" y2="12.5"/>
+              <polyline points="5.5,11 8,12.5 10.5,11"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div id="copy-toast" class="copy-toast">Copied!</div>
+      <div id="results">
+        <div class="results-empty">Enter OTE, NARR Quota, and deal details to see results.</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/calc-engine.js"></script>
+  <script src="js/scenarios.js"></script>
+  <script src="js/web-settings.js"></script>
+  <script src="js/ui.js"></script>
+</body>
+</html>
