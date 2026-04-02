@@ -1600,10 +1600,39 @@
     }
   });
 
-  // PDF export handler — web version uses window.print()
+  // PDF export handler — generates PDF via html2pdf.js and downloads it
   btnExportPdf.addEventListener('click', function () {
     if (this.disabled) return;
-    window.print();
+    const teamLabel = TEAM_PRESETS[currentTeam] ? TEAM_PRESETS[currentTeam].label : 'Custom';
+    const exportOpts = {
+      teamLabel: teamLabel,
+      dualMeasure: dualMeasureActive,
+      primaryLabel: currentPrimaryLabel,
+      secondaryLabel: currentSecondaryLabel,
+      obfuscate: obfuscateToggle.checked,
+      appVersion: ''
+    };
+    let html;
+    if (comparisonMode) {
+      html = buildComparisonPdfHtml(exportOpts);
+    } else {
+      const inputs = getInputs();
+      const r = inputs.dualMeasure
+        ? calculateDualMeasureCompensation(inputs)
+        : calculateCompensation(inputs);
+      const data = extractDisplayData(r, inputs, exportOpts);
+      html = buildPdfHtml(data, exportOpts);
+    }
+    var container = document.createElement('div');
+    container.innerHTML = html;
+    container.style.width = '612px';
+    html2pdf().set({
+      margin: 0,
+      filename: 'Commission-Breakdown.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#0c0f24' },
+      jsPDF: { unit: 'pt', format: 'letter', orientation: 'portrait' }
+    }).from(container).save();
   });
 
   // Tooltips: position with fixed so they escape overflow containers

@@ -824,6 +824,15 @@ select option {
   .scenarios-bar {
     width: 100%;
     flex-wrap: wrap;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .scenario-btn {
+    white-space: normal;
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: center;
   }
 
   .input-panels {
@@ -952,49 +961,3 @@ select option {
   }
 }
 
-/* Print styles for web PDF export via window.print() */
-@media print {
-  html, body {
-    height: auto;
-    overflow: visible;
-  }
-
-  .app {
-    display: block;
-    height: auto;
-  }
-
-  .app-header {
-    position: static;
-    border-bottom: 2px solid var(--accent);
-  }
-
-  .app-header h1 {
-    font-size: 16px;
-  }
-
-  .scenarios-bar,
-  .btn-compare,
-  .btn-danger,
-  .results-actions,
-  .copy-toast,
-  .tooltip-content,
-  #deal-b-section.field-hidden {
-    display: none !important;
-  }
-
-  .input-panels,
-  .results-panel {
-    overflow: visible;
-    max-height: none;
-  }
-
-  .results-panel {
-    border-left: none;
-    break-inside: avoid;
-  }
-
-  .section {
-    break-inside: avoid;
-  }
-}
