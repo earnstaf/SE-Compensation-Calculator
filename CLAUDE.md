@@ -38,16 +38,19 @@ se-comp-calc/
 
 - `nodeIntegration: false`, `contextIsolation: true`, `sandbox: true`
 - `webSecurity: true`, `allowRunningInsecureContent: false`
-- Preload script exposes only `appSettings.load()` and `appSettings.save()` via contextBridge
-- IPC settings handler whitelists allowed keys: `team`, `ote`, `narrQuota`, `narrQuotaCredit`
+- Preload script exposes `appSettings.load()`/`appSettings.save()` and `pdfExport.generate()` via contextBridge
+- IPC settings handler whitelists allowed keys: `team`, `ote`, `narrQuota`, `narrQuotaCredit`, `l3NarrQuota`, `l2NarrQuota`, `l3NarrQuotaCredit`, `l2NarrQuotaCredit`
+- PDF export IPC handler (`pdf:generate`) creates hidden BrowserWindow, uses `printToPDF()`
 - Navigation blocked (`will-navigate` prevented), new windows denied
 - Webview attachment blocked via `web-contents-created` listener
 
 ### Auto-Update
 
 - electron-updater checks GitHub Releases on app launch
-- Downloads update silently, prompts user to restart when ready
+- Windows: Wireshark-style update dialog with Install/Remind/Skip buttons, shows current vs new version
+- macOS: Manual download dialog with link to releases page and `xattr -cr` instructions (no code signing)
 - Triggered by pushing a git tag matching `v*` (e.g., `v1.1.0`)
+- Pre-release tags (`v*-rc.*`) build without becoming "latest" (won't trigger auto-update)
 - GitHub Actions workflow builds both platforms and publishes release artifacts
 
 ### Settings Persistence
@@ -79,7 +82,7 @@ Uplift Rates (editable, populated by team preset):
 - New Logo Uplift: Applied only when New Logo toggle is on (default 0.05%)
 - Multi-Year Uplift: Applied only when Multi-Year toggle is on (default 0.05%)
 - Accelerated PCR: Applied only to NARR above 100% attainment (default 0.25%)
-- RARR Rate: LATAM only, 0.10% of Renewed ARR (hidden for other teams)
+- RARR Rate: LATAM (0.10%) and PSA-MSP (0.05%) of Renewed ARR (hidden for other teams)
 
 There is NO always-on uplift. The base rate is just PCR. Uplifts only apply when their conditions are met.
 
@@ -223,9 +226,11 @@ Expected: Day 1 ARR=$900,000, NARR=-$100,000. Commission=$0.
 - Info icon (i) tooltips on every input field, positioned with JS (`position: fixed`) to avoid overflow clipping. Tooltips flip below trigger when near top edge.
 - Window resizable, minimum size accommodates all fields without scrolling.
 - PubSec teams disable and gray out Multi-Year toggle (N/A).
-- PSA teams show "Uplift values pending" note; user enters manually.
+- PSA teams have confirmed uplift values (no more "pending" note).
+- PSA-MSP: "New Logo" toggle relabeled to "MSP NARR".
 - Color scheme: crimson/navy/grey (matches Tanium brand colors).
 - Section labeled "User Profile" (not "SE Profile").
+- Help > About menu shows version and author (Eric Arnst).
 
 ## Code Conventions
 
@@ -234,12 +239,59 @@ Expected: Day 1 ARR=$900,000, NARR=-$100,000. Commission=$0.
 - Minimal comments, only where logic is non-obvious.
 - Prefer simplicity over abstraction.
 
+## Export Features
+
+### Copy to Clipboard
+- Copy button (clipboard icon) in results panel header copies plain-text summary
+- "Copied!" toast fades after 1.5 seconds
+- "Hide PCR" checkbox obfuscates PCR values in output (shows `[hidden]`)
+- Output mirrors results panel: User Profile → Deal Details → Results
+- Supports single-measure, dual-measure, LATAM/PSA-MSP RARR, accelerator splits
+- Uses `navigator.clipboard.writeText()` (standard Web API, works in sandbox)
+
+### PDF Export
+- Export PDF button (document icon) in results panel header
+- Single-page PDF via Electron's `webContents.printToPDF()` — no external PDF library
+- Crimson/navy color scheme matching the app
+- IPC: renderer sends HTML string → main.js creates hidden BrowserWindow → loads via data URI → printToPDF → save dialog → write file
+- Footer shows app version; version passed via `_appVersion` in `settings:load` response
+- Respects "Hide PCR" checkbox state
+
+### Both Export Types in Comparison Mode
+- Include Deal A, Deal B, and Comparison summary sections
+- Profile section shown once (shared between deals)
+
+## Deal Comparison Mode
+
+- "Compare Deals" toggle in header bar, near scenario presets
+- When active: Deal Details becomes "Deal A", Deal B section appears below
+- Results panel splits into two-column grid (Deal A / Deal B) with comparison summary
+- Both deals use the SAME User Profile (OTE, quota, uplift rates, quota credit)
+- Deals are independent what-if calculations — Deal B does NOT inherit Deal A's quota retirement
+- Dual-measure: each deal has its own L3 region toggle
+- Comparison summary shows: Commission Delta, NARR Retirement Delta, Post-Deal Attainment Delta
+- Green text for higher-value deal, red for lower, muted for even
+- Scenario presets populate Deal A only
+- Reset button exits comparison mode and clears Deal B
+- No persistence of Deal B across sessions
+- Maximum two deals (not a pipeline tracker)
+
+### Render Architecture
+Results rendering refactored into reusable builder functions:
+- `buildSingleMeasureHtml(r, inputs)` → HTML string
+- `buildDualMeasureHtml(r, inputs)` → HTML string
+- `renderResults()` and `renderDualMeasureResults()` are thin wrappers
+- Comparison mode uses the same builders for each column
+
 ## Packaging & Distribution
 
 - electron-builder configured for Windows (NSIS installer .exe) and macOS (.dmg + .zip).
 - NSIS: one-click install, per-user, no directory selection.
+- Artifact filenames do NOT include version (e.g., `Pre-Sales-Compensation-Calculator-Setup.exe`)
+- README uses permanent `/releases/latest/download/` URLs — no update needed on each release
 - GitHub Actions builds on tag push (`v*`) or manual workflow_dispatch.
 - GitHub Releases hosts distributables; electron-updater checks releases for updates.
+- Pre-release builds: tag as `v*-rc.*`, mark as prerelease after build, won't affect auto-update
 - App icon at `assets/icon.png`.
 - `asar: true`, `compression: maximum`.
 - Repo is public at github.com/earnstaf/SE-Compensation-Calculator.
