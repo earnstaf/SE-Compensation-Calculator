@@ -61,7 +61,7 @@ app.whenReady().then(async () => {
   await initStore();
   createWindow();
 
-  autoUpdater.autoDownload = true;
+  autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = true;
 
   autoUpdater.on('error', (err) => {
@@ -74,6 +74,16 @@ app.whenReady().then(async () => {
 
   autoUpdater.on('update-available', (info) => {
     console.log('Update available:', info.version);
+    dialog.showMessageBox({
+      type: 'info',
+      title: 'Update Available',
+      message: `Version ${info.version} is available. Would you like to download and install it?`,
+      buttons: ['Update', 'Skip']
+    }).then((result) => {
+      if (result.response === 0) {
+        autoUpdater.downloadUpdate();
+      }
+    });
   });
 
   autoUpdater.on('update-not-available', () => {
@@ -83,7 +93,7 @@ app.whenReady().then(async () => {
   autoUpdater.on('update-downloaded', (info) => {
     dialog.showMessageBox({
       type: 'info',
-      title: 'Update Available',
+      title: 'Update Ready',
       message: `Version ${info.version} has been downloaded. Restart now to apply the update?`,
       buttons: ['Restart', 'Later']
     }).then((result) => {
@@ -93,7 +103,7 @@ app.whenReady().then(async () => {
     });
   });
 
-  autoUpdater.checkForUpdatesAndNotify().catch(() => {});
+  autoUpdater.checkForUpdates().catch(() => {});
 });
 
 app.on('window-all-closed', () => {
