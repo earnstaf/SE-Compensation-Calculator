@@ -64,6 +64,22 @@ app.whenReady().then(async () => {
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
 
+  autoUpdater.on('error', (err) => {
+    console.error('Auto-updater error:', err);
+  });
+
+  autoUpdater.on('checking-for-update', () => {
+    console.log('Checking for update...');
+  });
+
+  autoUpdater.on('update-available', (info) => {
+    console.log('Update available:', info.version);
+  });
+
+  autoUpdater.on('update-not-available', () => {
+    console.log('No update available.');
+  });
+
   autoUpdater.on('update-downloaded', (info) => {
     dialog.showMessageBox({
       type: 'info',
