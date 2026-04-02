@@ -6,12 +6,12 @@ No internet connection, accounts, or dependencies needed after installation.
 
 ## Download
 
-**[Download the latest release](https://github.com/earnstaf/SE-Compensation-Calculator/releases/latest)**
+| Platform | Download | Notes |
+|----------|----------|-------|
+| **Windows** | [Pre-Sales-Compensation-Calculator-Setup-1.1.3.exe](https://github.com/earnstaf/SE-Compensation-Calculator/releases/download/v1.1.3/Pre-Sales-Compensation-Calculator-Setup-1.1.3.exe) | NSIS installer, auto-updates on future releases |
+| **macOS** | [Pre-Sales-Compensation-Calculator-1.1.3-arm64.dmg](https://github.com/earnstaf/SE-Compensation-Calculator/releases/download/v1.1.3/Pre-Sales-Compensation-Calculator-1.1.3-arm64.dmg) | Drag to Applications (see install note below) |
 
-| Platform | File | Notes |
-|----------|------|-------|
-| **Windows** | `Pre-Sales-Compensation-Calculator-Setup-X.X.X.exe` | NSIS installer, auto-updates on future releases |
-| **macOS** | `Pre-Sales-Compensation-Calculator-X.X.X-arm64.dmg` | Drag to Applications (see install note below) |
+All versions available on the [Releases page](../../releases/latest).
 
 ### macOS Installation Note
 
