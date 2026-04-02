@@ -1,6 +1,9 @@
-const { app, BrowserWindow, dialog, ipcMain } = require('electron');
+const { app, BrowserWindow, dialog, shell, ipcMain } = require('electron');
 const path = require('path');
 const { autoUpdater } = require('electron-updater');
+
+const isMac = process.platform === 'darwin';
+const RELEASES_URL = 'https://github.com/earnstaf/SE-Compensation-Calculator/releases/latest';
 
 let store;
 
@@ -74,16 +77,35 @@ app.whenReady().then(async () => {
 
   autoUpdater.on('update-available', (info) => {
     console.log('Update available:', info.version);
-    dialog.showMessageBox({
-      type: 'info',
-      title: 'Update Available',
-      message: `Version ${info.version} is available. Would you like to download and install it?`,
-      buttons: ['Update', 'Skip']
-    }).then((result) => {
-      if (result.response === 0) {
-        autoUpdater.downloadUpdate();
-      }
-    });
+    if (isMac) {
+      dialog.showMessageBox({
+        type: 'info',
+        title: 'Update Available',
+        message: `Version ${info.version} is available.`,
+        detail: 'To update on macOS:\n\n'
+          + '1. Click "Download" to open the releases page\n'
+          + '2. Download the .dmg file\n'
+          + '3. Open Terminal and run:\n'
+          + '    xattr -cr ~/Downloads/Pre-Sales*.dmg\n'
+          + '4. Open the .dmg and drag the app to Applications',
+        buttons: ['Download', 'Skip']
+      }).then((result) => {
+        if (result.response === 0) {
+          shell.openExternal(RELEASES_URL);
+        }
+      });
+    } else {
+      dialog.showMessageBox({
+        type: 'info',
+        title: 'Update Available',
+        message: `Version ${info.version} is available. Would you like to download and install it?`,
+        buttons: ['Update', 'Skip']
+      }).then((result) => {
+        if (result.response === 0) {
+          autoUpdater.downloadUpdate();
+        }
+      });
+    }
   });
 
   autoUpdater.on('update-not-available', () => {
