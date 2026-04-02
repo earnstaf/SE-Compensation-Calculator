@@ -6,13 +6,12 @@ No internet connection, accounts, or dependencies needed after installation.
 
 ## Download
 
-| Platform | Download | Notes |
-|----------|----------|-------|
-| **Windows** | [Pre-Sales-Compensation-Calculator-Setup-1.0.0.exe](https://github.com/earnstaf/SE-Compensation-Calculator/releases/download/v1.0.0/Pre-Sales-Compensation-Calculator-Setup-1.0.0.exe) | NSIS installer, auto-updates on future releases |
-| **macOS (dmg)** | [Pre-Sales-Compensation-Calculator-1.0.0-arm64.dmg](https://github.com/earnstaf/SE-Compensation-Calculator/releases/download/v1.0.0/Pre-Sales-Compensation-Calculator-1.0.0-arm64.dmg) | Drag to Applications |
-| **macOS (zip)** | [Pre-Sales-Compensation-Calculator-1.0.0-arm64-mac.zip](https://github.com/earnstaf/SE-Compensation-Calculator/releases/download/v1.0.0/Pre-Sales-Compensation-Calculator-1.0.0-arm64-mac.zip) | Extract and run |
+**[Download the latest release](https://github.com/earnstaf/SE-Compensation-Calculator/releases/latest)**
 
-All downloads also available on the [Releases page](../../releases/latest).
+| Platform | File | Notes |
+|----------|------|-------|
+| **Windows** | `Pre-Sales-Compensation-Calculator-Setup-X.X.X.exe` | NSIS installer, auto-updates on future releases |
+| **macOS** | `Pre-Sales-Compensation-Calculator-X.X.X-arm64.dmg` | Drag to Applications (see install note below) |
 
 ### macOS Installation Note
 
@@ -27,7 +26,7 @@ xattr -cr "/Applications/Pre-Sales Compensation Calculator.app"
 
 If you extracted from the `.zip` (default Downloads folder):
 ```bash
-xattr -cr ~/Downloads/"Pre-Sales Compensation Calculator-1.0.0-arm64-mac"/"Pre-Sales Compensation Calculator.app"
+xattr -cr ~/Downloads/"Pre-Sales Compensation Calculator"*/"Pre-Sales Compensation Calculator.app"
 ```
 
 > **What does this do?** The `xattr -cr` command removes the macOS quarantine attribute that gets added to files downloaded from the internet. This is the same attribute Gatekeeper checks before allowing an app to launch. The `-c` flag clears all extended attributes and `-r` applies it recursively to the `.app` bundle.
