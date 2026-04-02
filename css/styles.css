@@ -793,6 +793,167 @@ select option {
   background: var(--text-muted);
 }
 
+/* Responsive: tablet and below */
+@media (max-width: 768px) {
+  .app {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto auto;
+    height: auto;
+    min-height: 100vh;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  .app-header {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 14px;
+  }
+
+  .app-header h1 {
+    font-size: 14px;
+    width: 100%;
+  }
+
+  .header-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .scenarios-bar {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .input-panels {
+    border-right: none;
+    padding: 12px;
+  }
+
+  .results-panel {
+    padding: 12px;
+  }
+
+  .comparison-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dm-quota-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .dm-custom-labels-row {
+    grid-template-columns: 1fr;
+  }
+
+  .dm-uplift-header,
+  .dm-uplift-row {
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+  }
+}
+
+/* Responsive: phone */
+@media (max-width: 480px) {
+  .results-panel,
+  .input-panels,
+  .section {
+    max-width: 100%;
+    overflow-x: hidden;
+    min-width: 0;
+  }
+
+  .rate-breakdown {
+    word-break: break-word;
+    font-size: 10px;
+  }
+
+  .result-row {
+    gap: 8px;
+  }
+
+  .result-label {
+    min-width: 0;
+    flex-shrink: 1;
+  }
+
+  .result-value {
+    flex-shrink: 0;
+    text-align: right;
+  }
+
+  body {
+    font-size: 14px;
+  }
+
+  .app-header h1 {
+    font-size: 13px;
+  }
+
+  .field-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .section {
+    padding: 12px;
+  }
+
+  .scenario-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  input[type="text"],
+  input[type="number"] {
+    font-size: 16px;
+    padding: 10px 10px;
+  }
+
+  input.has-prefix {
+    padding-left: 22px;
+  }
+
+  select {
+    font-size: 16px;
+    padding: 10px 28px 10px 10px;
+  }
+
+  .team-selector select {
+    min-width: 120px;
+  }
+
+  .result-value {
+    font-size: 14px;
+  }
+
+  .result-row.highlight .result-value {
+    font-size: 16px;
+  }
+
+  .dm-uplift-header,
+  .dm-uplift-row {
+    grid-template-columns: 1.2fr 1fr 1fr;
+    gap: 4px;
+  }
+
+  .dm-uplift-label .field-label {
+    font-size: 10px;
+  }
+
+  .dm-uplift-cell input {
+    font-size: 14px;
+  }
+
+  .tooltip-content {
+    width: 200px;
+  }
+}
+
 /* Print styles for web PDF export via window.print() */
 @media print {
   html, body {
