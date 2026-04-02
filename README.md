@@ -27,7 +27,7 @@ xattr -cr "/Applications/Pre-Sales Compensation Calculator.app"
 
 If you extracted from the `.zip` (default Downloads folder):
 ```bash
-xattr -cr ~/Downloads/Pre-Sales\ Compensation\ Calculator-1.0.0-arm64-mac/Pre-Sales\ Compensation\ Calculator.app
+xattr -cr ~/Downloads/"Pre-Sales Compensation Calculator-1.0.0-arm64-mac"/"Pre-Sales Compensation Calculator.app"
 ```
 
 > **What does this do?** The `xattr -cr` command removes the macOS quarantine attribute that gets added to files downloaded from the internet. This is the same attribute Gatekeeper checks before allowing an app to launch. The `-c` flag clears all extended attributes and `-r` applies it recursively to the `.app` bundle.
@@ -63,24 +63,7 @@ These fields define your personal compensation structure. Values come from your 
 
 ### Team Selector
 
-Located in the header bar. Selecting a team auto-populates the uplift rates with that team's preset values. You can override any value manually — the selector will show the team name to indicate it's still based on that preset.
-
-| Team | New Logo Uplift | Multi-Year Uplift | Accelerated PCR | Notes |
-|------|----------------|-------------------|-----------------|-------|
-| MM/Commercial | 0.05% | 0.05% | 0.25% | |
-| Japan | 0.05% | 0.05% | 0.25% | |
-| APAC | 0.05% | 0.05% | 0.25% | |
-| US & Canada (excl Fed) | 0.045% | 0.045% | 0.20% | M1 values (80/20 split) |
-| EMEA | 0.045% | 0.045% | 0.20% | M1 values (80/20 split) |
-| US PubSec | 0.10% | N/A | 0.25% | Multi-Year disabled |
-| LATAM | 0.05% | 0.05% | 0.25% | +RARR commission (0.10%) |
-| ISE - MM/Commercial | 0.025% | 0.025% | 0.075% | |
-| ISE - EMEA | 0.0225% | 0.0225% | 0.0725% | |
-| ISE - PubSec | 0.050% | N/A | 0.075% | Multi-Year disabled |
-| GEE-VE Strategists | 0.025% | 0.025% | 0.15% | 100% NARR, Geo/Segment |
-| PSA - GSI & SPA | Pending | Pending | Pending | Enter values manually |
-| PSA - MSP | Pending | Pending | Pending | NL Uplift = "MSP NARR" accelerator |
-| PSA - Hybrid | Pending | Pending | Pending | Enter values manually |
+Located in the header bar. Selecting a team auto-populates the uplift rates with your team's preset values. You can override any value manually.
 
 ### Uplift Rates
 
@@ -93,7 +76,7 @@ These rates modify your commission rate based on deal characteristics. They are 
 | **Accelerated PCR** | Additional rate applied to NARR above 100% attainment | Only on the portion of NARR that exceeds quota |
 | **RARR Rate** | Bonus commission rate on Renewed ARR (LATAM only) | Only when LATAM team is selected |
 
-There is no always-on uplift. Your base commission rate is PCR alone. Uplifts stack additively when their conditions are met.
+Your base commission rate is PCR alone. Uplifts stack additively when their conditions are met.
 
 ### Deal Details
 
@@ -133,28 +116,12 @@ Four built-in scenarios are available in the header bar to quickly populate deal
 
 ## How Commission Is Calculated
 
-### Rate Construction
-
-```
-base_rate = PCR
-if new_logo:  base_rate += New Logo Uplift
-if multi_year: base_rate += Multi-Year Uplift
-
-accelerated_rate = base_rate + Accelerated PCR
-```
-
-### Attainment Split
-
 When a deal straddles 100% quota attainment, the NARR is split:
 
-- **Below 100%:** Portion of NARR that brings you up to 100%, paid at `base_rate`
-- **Above 100%:** Remaining NARR beyond 100%, paid at `accelerated_rate`
+- **Below 100%:** Portion of NARR that brings you up to 100%, paid at the base rate
+- **Above 100%:** Remaining NARR beyond 100%, paid at the accelerated rate
 
-If you're already above 100% before the deal, the entire deal pays at the accelerated rate.
-
-### LATAM RARR Bonus
-
-LATAM teams receive an additional commission of `RARR Rate × Renewed ARR`, paid on top of the standard NARR-based commission.
+If you're already above 100% before the deal, the entire deal pays at the accelerated rate. The results panel shows the full breakdown including which rates applied and why.
 
 ## FAQ
 
@@ -162,13 +129,7 @@ LATAM teams receive an additional commission of `RARR Rate × Renewed ARR`, paid
 CARR (Churned ARR) is displayed for context but is intentionally excluded from the NARR calculation. Your commission is based on Day 1 ARR minus IARR, not net of churn.
 
 **Q: Why is Multi-Year grayed out for my team?**
-US PubSec and ISE - PubSec teams have no Multi-Year Uplift in their comp plan, so the toggle is disabled.
-
-**Q: What does "Pending" mean for PSA teams?**
-PSA uplift values have not been finalized. Select your PSA team and enter the uplift values manually based on your comp plan letter.
-
-**Q: My team uses an M1/M2 quota split. Which values should I use?**
-This calculator operates on a single deal against a single measure. Use your M1 (primary measure) uplift values, which are the defaults for US & Canada, EMEA, and ISE - EMEA teams. An annual calculator with full M1/M2 support is planned for a future release.
+Some teams have no Multi-Year Uplift in their comp plan, so the toggle is disabled when those teams are selected.
 
 **Q: Does the app store any data?**
 Your Team selection, OTE, NARR Quota, and NARR Quota Credit are saved locally between sessions so you don't have to re-enter them each time. This data is stored in a JSON file in your system's app data folder and is never transmitted over the network. Deal-specific inputs (IARR, Renewed ARR, NARR, toggles) reset when you close the app.
