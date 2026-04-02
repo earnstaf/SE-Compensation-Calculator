@@ -1,5 +1,6 @@
 const { app, BrowserWindow, Menu, dialog, shell, ipcMain } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
 
 const isMac = process.platform === 'darwin';
@@ -26,13 +27,62 @@ async function initStore() {
 
 const ALLOWED_SETTINGS = new Set(['team', 'ote', 'narrQuota', 'narrQuotaCredit', 'l3NarrQuota', 'l2NarrQuota', 'l3NarrQuotaCredit', 'l2NarrQuotaCredit']);
 
-ipcMain.handle('settings:load', () => store ? store.store : {});
+ipcMain.handle('settings:load', () => {
+  const data = store ? Object.assign({}, store.store) : {};
+  data._appVersion = app.getVersion();
+  return data;
+});
 ipcMain.handle('settings:save', (_event, data) => {
   if (!store) return;
   for (const [key, value] of Object.entries(data)) {
     if (ALLOWED_SETTINGS.has(key) && typeof value === 'string') {
       store.set(key, value);
     }
+  }
+});
+
+ipcMain.handle('pdf:generate', async (_event, htmlString) => {
+  const pdfWin = new BrowserWindow({
+    width: 800,
+    height: 1100,
+    show: false,
+    webPreferences: {
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true
+    }
+  });
+
+  try {
+    await pdfWin.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(htmlString));
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const pdfBuffer = await pdfWin.webContents.printToPDF({
+      landscape: false,
+      pageSize: 'Letter',
+      printBackground: true,
+      margins: { marginType: 'custom', top: 0.5, bottom: 0.5, left: 0.5, right: 0.5 }
+    });
+
+    const dateStr = new Date().toISOString().slice(0, 10);
+    const { canceled, filePath } = await dialog.showSaveDialog({
+      title: 'Export Commission Breakdown',
+      defaultPath: path.join(app.getPath('downloads'), 'Commission-Breakdown-' + dateStr + '.pdf'),
+      filters: [{ name: 'PDF', extensions: ['pdf'] }]
+    });
+
+    if (canceled || !filePath) {
+      pdfWin.close();
+      return { success: false, reason: 'cancelled' };
+    }
+
+    fs.writeFileSync(filePath, pdfBuffer);
+    pdfWin.close();
+    return { success: true, filePath: filePath };
+  } catch (err) {
+    pdfWin.close();
+    console.error('PDF generation failed:', err);
+    return { success: false, reason: err.message };
   }
 });
 

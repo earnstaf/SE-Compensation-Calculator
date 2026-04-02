@@ -38,6 +38,7 @@
           <button class="scenario-btn" data-scenario="new-logo-overachieve" title="New logo multi-year deal that pushes past 100% attainment, triggering accelerated PCR.">New Logo + Multi-Year</button>
           <button class="scenario-btn" data-scenario="new-logo" title="New logo deal, below 100% attainment. New Logo Uplift applies.">New Logo Only</button>
         </div>
+        <button class="btn btn-compare" id="btn-compare">Compare Deals</button>
         <button class="btn btn-danger" id="btn-reset">Clear</button>
       </div>
     </header>
@@ -483,11 +484,92 @@
           </div>
         </div>
       </div>
+
+      <!-- Deal B Section (Comparison Mode) -->
+      <div class="section field-hidden" id="deal-b-section">
+        <div class="section-title">Deal B</div>
+        <div class="field-grid">
+          <div class="field">
+            <label class="field-label">IARR</label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="b-iarr" class="has-prefix" data-currency value="0">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">Renewed ARR</label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="b-renewed-arr" class="has-prefix" data-currency value="0">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">CARR</label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="b-carr" class="has-prefix" data-currency value="0">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">NARR</label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="b-new-module-arr" class="has-prefix" data-currency>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label" id="b-new-logo-field-label">New Logo</label>
+            <div class="toggle-field">
+              <div class="toggle" id="b-new-logo-toggle" role="switch" aria-checked="false" tabindex="0"></div>
+              <span class="toggle-label" id="b-new-logo-label">No</span>
+            </div>
+          </div>
+          <div class="field" id="b-multi-year-field">
+            <label class="field-label">Multi-Year</label>
+            <div class="toggle-field">
+              <div class="toggle" id="b-multi-year-toggle" role="switch" aria-checked="false" tabindex="0"></div>
+              <span class="toggle-label" id="b-multi-year-label">No</span>
+            </div>
+          </div>
+          <div class="field dual-measure-only" id="b-l3-region-field">
+            <label class="field-label">
+              <span id="b-l3-region-toggle-label">Deal is within my L3 region</span>
+            </label>
+            <div class="toggle-field">
+              <div class="toggle active" id="b-l3-region-toggle" role="switch" aria-checked="true" tabindex="0"></div>
+              <span class="toggle-label" id="b-l3-region-label">Yes</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Results Panel -->
     <div class="results-panel">
-      <div class="results-title">Commission Breakdown</div>
+      <div class="results-header">
+        <div class="results-title">Commission Breakdown</div>
+        <div class="results-actions">
+          <label class="obfuscate-toggle" title="When checked, PCR values are hidden in the exported output">
+            <input type="checkbox" id="obfuscate-toggle">
+            <span>Hide PCR</span>
+          </label>
+          <button class="btn-icon" id="btn-copy" title="Copy to clipboard" disabled>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5.5" y="5.5" width="8" height="9" rx="1.5"/>
+              <path d="M10.5 5.5V3a1.5 1.5 0 00-1.5-1.5H4A1.5 1.5 0 002.5 3v7A1.5 1.5 0 004 11.5h1.5"/>
+            </svg>
+          </button>
+          <button class="btn-icon" id="btn-export-pdf" title="Export PDF" disabled>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 1.5H4A1.5 1.5 0 002.5 3v10A1.5 1.5 0 004 14.5h8a1.5 1.5 0 001.5-1.5V6.5L9 1.5z"/>
+              <polyline points="9,1.5 9,6.5 13.5,6.5"/>
+              <line x1="8" y1="9.5" x2="8" y2="12.5"/>
+              <polyline points="5.5,11 8,12.5 10.5,11"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div id="copy-toast" class="copy-toast">Copied!</div>
       <div id="results">
         <div class="results-empty">Enter OTE, NARR Quota, and deal details to see results.</div>
       </div>
