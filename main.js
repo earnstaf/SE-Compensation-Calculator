@@ -17,11 +17,15 @@ async function initStore() {
   });
 }
 
+const ALLOWED_SETTINGS = new Set(['team', 'ote', 'narrQuota', 'narrQuotaCredit']);
+
 ipcMain.handle('settings:load', () => store ? store.store : {});
 ipcMain.handle('settings:save', (_event, data) => {
   if (!store) return;
   for (const [key, value] of Object.entries(data)) {
-    store.set(key, value);
+    if (ALLOWED_SETTINGS.has(key) && typeof value === 'string') {
+      store.set(key, value);
+    }
   }
 });
 
