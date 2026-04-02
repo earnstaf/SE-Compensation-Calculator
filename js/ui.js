@@ -499,7 +499,7 @@
 
     setCurrencyDisplay(fields.salary, r.salary);
     setCurrencyDisplay(fields.otv, r.otv);
-    fields.pcr.value = inputs.narrQuota > 0 ? formatRate(r.pcr) : '';
+    fields.pcr.value = inputs.narrQuota > 0 ? formatRateAsPercent(r.pcr) : '';
     fields.narrAttainment.value = inputs.narrQuota > 0
       ? (r.narrQuotaAttainment * 100).toFixed(2)
       : '';
@@ -512,8 +512,8 @@
 
     setCurrencyDisplay(fields.salary, r.salary);
     setCurrencyDisplay(fields.otv, r.otv);
-    fields.l3Pcr.value = inputs.l3NarrQuota > 0 ? formatRate(r.l3Pcr) : '';
-    fields.l2Pcr.value = inputs.l2NarrQuota > 0 ? formatRate(r.l2Pcr) : '';
+    fields.l3Pcr.value = inputs.l3NarrQuota > 0 ? formatRateAsPercent(r.l3Pcr) : '';
+    fields.l2Pcr.value = inputs.l2NarrQuota > 0 ? formatRateAsPercent(r.l2Pcr) : '';
     fields.l3Attainment.value = inputs.l3NarrQuota > 0
       ? (r.l2 ? (inputs.l3NarrQuotaCredit / inputs.l3NarrQuota * 100).toFixed(2) : '')
       : '';
@@ -1281,8 +1281,8 @@
     if (inputsA.dualMeasure) {
       setCurrencyDisplay(fields.salary, rA.salary);
       setCurrencyDisplay(fields.otv, rA.otv);
-      fields.l3Pcr.value = inputsA.l3NarrQuota > 0 ? formatRate(rA.l3Pcr) : '';
-      fields.l2Pcr.value = inputsA.l2NarrQuota > 0 ? formatRate(rA.l2Pcr) : '';
+      fields.l3Pcr.value = inputsA.l3NarrQuota > 0 ? formatRateAsPercent(rA.l3Pcr) : '';
+      fields.l2Pcr.value = inputsA.l2NarrQuota > 0 ? formatRateAsPercent(rA.l2Pcr) : '';
       if (inputsA.l3NarrQuota > 0) {
         fields.l3Attainment.value = (inputsA.l3NarrQuotaCredit / inputsA.l3NarrQuota * 100).toFixed(2);
       }
@@ -1292,7 +1292,7 @@
     } else {
       setCurrencyDisplay(fields.salary, rA.salary);
       setCurrencyDisplay(fields.otv, rA.otv);
-      fields.pcr.value = inputsA.narrQuota > 0 ? formatRate(rA.pcr) : '';
+      fields.pcr.value = inputsA.narrQuota > 0 ? formatRateAsPercent(rA.pcr) : '';
       fields.narrAttainment.value = inputsA.narrQuota > 0
         ? (rA.narrQuotaAttainment * 100).toFixed(2) : '';
     }
