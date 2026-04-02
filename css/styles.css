@@ -416,6 +416,33 @@ input.computed:focus {
   border-bottom: 1px solid var(--border);
 }
 
+/* Custom dual-measure label/split row */
+.dm-custom-labels-row {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.dm-split-inputs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dm-split-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.dm-split-slash {
+  color: var(--text-muted);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* Hide custom labels row for preset teams */
+.custom-dm-only {
+  /* shown/hidden via JS field-hidden class */
+}
+
 .psa-pending-note {
   font-size: 11px;
   color: var(--orange);

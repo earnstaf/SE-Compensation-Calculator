@@ -73,13 +73,15 @@ function calculateDualMeasureCompensation(inputs) {
     newModuleArr,
     newLogoDeal,
     multiYearDeal,
-    dealInL3
+    dealInL3,
+    primarySplit = 0.80,
+    secondarySplit = 0.20
   } = inputs;
 
   const salary = ote * 0.80;
   const otv = ote * 0.20;
-  const l3Pcr = l3NarrQuota > 0 ? (otv * 0.80) / l3NarrQuota : 0;
-  const l2Pcr = l2NarrQuota > 0 ? (otv * 0.20) / l2NarrQuota : 0;
+  const l3Pcr = l3NarrQuota > 0 ? (otv * primarySplit) / l3NarrQuota : 0;
+  const l2Pcr = l2NarrQuota > 0 ? (otv * secondarySplit) / l2NarrQuota : 0;
 
   const day1Arr = renewedArr + newModuleArr;
   const narrQuotaRetirement = day1Arr - iarr;
@@ -187,7 +189,7 @@ function calculateCompensation(inputs) {
   }
 
   let rarrCommission = 0;
-  if (latamMode && renewedArr > 0 && rarrRate > 0) {
+  if ((latamMode || inputs.rarrMode) && renewedArr > 0 && rarrRate > 0) {
     rarrCommission = renewedArr * rarrRate;
   }
 
@@ -216,6 +218,7 @@ function calculateCompensation(inputs) {
     straddlesThreshold,
     newLogoDeal,
     multiYearDeal,
-    latamMode
+    latamMode,
+    rarrMode: inputs.rarrMode || false
   };
 }

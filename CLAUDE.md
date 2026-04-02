@@ -174,9 +174,9 @@ Team selector in header bar (independent of scenario selection). Auto-populates 
 | Japan | 0.05% | 0.05% | 0.25% | |
 | LATAM | 0.05% | 0.05% | 0.25% | +RARR commission (0.10%) |
 | MM/Commercial | 0.05% | 0.05% | 0.25% | |
-| PSA - GSI & SPA | 0 | 0 | 0 | Pending — user enters manually |
-| PSA - Hybrid | 0 | 0 | 0 | Pending — user enters manually |
-| PSA - MSP | 0 | 0 | 0 | Pending — NL Uplift = "MSP NARR" accelerator |
+| PSA - GSI & SPA | 0.045% | 0.045% | 0.20% | Dual-measure (70/30), Named Accounts / Geo SPAs |
+| PSA - Hybrid | 0.045% | 0.045% | 0.20% | Dual-measure (70/30), Primary Named / Secondary Assignment |
+| PSA - MSP | 0.05% (MSP NARR) | 0.05% | 0.25% | +RARR commission (0.05%), NL="MSP NARR" |
 | US & Canada (excl Fed) | 0.045% | 0.045% | 0.20% | M1 values (80/20 split) |
 | US PubSec | 0.10% | N/A (0%) | 0.25% | Multi-Year toggle disabled |
 
@@ -254,31 +254,49 @@ Expected: Day 1 ARR=$900,000, NARR=-$100,000. Commission=$0.
 
 ## Dual-Measure Support
 
-Teams with 80/20 quota splits (US & Canada, EMEA, ISE-EMEA) use two PCRs derived from the same OTV:
-- L3 PCR = (OTV * 0.80) / L3 NARR Quota (regional, higher rate, lower quota)
-- L2 PCR = (OTV * 0.20) / L2 NARR Quota (geo, lower rate, higher quota)
+Teams with quota splits use two PCRs derived from the same OTV:
+- Primary PCR = (OTV * primarySplit) / Primary NARR Quota (higher rate, lower quota)
+- Secondary PCR = (OTV * secondarySplit) / Secondary NARR Quota (lower rate, higher quota)
 
-Each measure has its own New Logo, Multi-Year, and Accelerated PCR uplift values. L3 Accelerated PCR (0.20%) + L2 Accelerated PCR (0.05%) = 0.25%, matching the single-measure Accelerated PCR by design.
+Each measure has its own New Logo, Multi-Year, and Accelerated PCR uplift values. Primary Accelerated PCR + Secondary Accelerated PCR = total Accelerated PCR by design.
 
-A deal-level toggle ("Deal is within my L3 region") controls payout scope:
-- On (L3 deal): The deal earns commission on BOTH measures. L3 NARR rolls up to L2, so the same deal_narr is run through the commission formula twice (once with L3 rates/quota/attainment, once with L2), and both payouts are summed.
-- Off (L2-only deal): The deal earns commission on L2 only. Single payout.
+A deal-level toggle controls payout scope (label is dynamic per team):
+- On (primary deal): The deal earns commission on BOTH measures. Primary NARR rolls up to secondary, so the same deal_narr is run through the commission formula twice (once with primary rates/quota/attainment, once with secondary), and both payouts are summed.
+- Off (secondary-only deal): The deal earns commission on secondary only. Single payout.
 
-L3 and L2 attainment thresholds are independent. A deal can cross 100% on one measure but not the other.
+Primary and secondary attainment thresholds are independent. A deal can cross 100% on one measure but not the other.
+
+### Dual-Measure Teams
+
+| Team | Split | Primary Label | Secondary Label |
+|------|-------|---------------|-----------------|
+| US & Canada (excl Fed) | 80/20 | L3 (Regional) | L2 (Geo) |
+| EMEA | 80/20 | L3 (Regional) | L2 (Geo) |
+| ISE - EMEA | 80/20 | L3 (Regional) | L2 (Geo) |
+| PSA - GSI & SPA | 70/30 | Named Accounts Partner NARR | Geo-based SPAs Partner NARR |
+| PSA - Hybrid | 70/30 | Primary Named Account | Secondary Assignment |
+
+Measure labels are dynamic per team preset. The dual-measure system supports arbitrary label text so it can accommodate any future team naming conventions.
 
 ### Dual-Measure Toggle Behavior
 
 - Preset dual-measure teams: toggle is auto-enabled and locked on
-- Custom team: toggle is unlockable, user controls it
+- Custom team: toggle is unlockable, user controls it; custom label and split ratio fields appear
 - Single-measure preset teams: toggle is hidden
 
 ### Dual-Measure Uplift Presets
 
-| Team | L3 NL | L3 MY | L3 Accel | L2 NL | L2 MY | L2 Accel |
+| Team | M1 NL | M1 MY | M1 Accel | M2 NL | M2 MY | M2 Accel |
 |------|-------|-------|---------|-------|-------|---------|
 | US & Canada (excl Fed) | 0.045% | 0.045% | 0.20% | 0.005% | 0.005% | 0.05% |
 | EMEA | 0.045% | 0.045% | 0.20% | 0.005% | 0.005% | 0.05% |
 | ISE - EMEA | 0.0225% | 0.0225% | 0.0725% | 0.0025% | 0.0025% | 0.0025% |
+| PSA - GSI & SPA | 0.045% | 0.045% | 0.20% | 0.005% | 0.005% | 0.05% |
+| PSA - Hybrid | 0.045% | 0.045% | 0.20% | 0.005% | 0.005% | 0.05% |
+
+### PSA-MSP
+
+Single-measure team (100% Global MSP ARR). Uses "MSP NARR" instead of "New Logo" as the uplift toggle label. Includes RARR bonus commission at 0.05% of Renewed ARR (same mechanic as LaTam at 0.10%, different rate).
 
 ### Test Case: Dual-Measure L3 Deal
 
@@ -328,7 +346,7 @@ LATAM uses 100% L4 ARR (not NARR) as its quota measure. The RARR bonus commissio
 
 ### PSA Quota Splits
 
-PSA-GSI & SPA and PSA-Hybrid use a 70/30 quota split (70% Named Accounts Partner NARR / 30% Geo-based SPAs Partner NARR for GSI & SPA; 70% Primary Named Account / 30% Secondary Assignment for Hybrid). PSA-MSP uses 100% Global MSP ARR. These splits only matter for the annual calculator.
+PSA-GSI & SPA and PSA-Hybrid use a 70/30 quota split and are now implemented as dual-measure teams in the deal-level calculator. PSA-MSP uses 100% Global MSP ARR (single measure) with RARR bonus commission at 0.05%.
 
 ### GEE-VE Quota
 

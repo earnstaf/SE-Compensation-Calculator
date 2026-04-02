@@ -87,14 +87,51 @@
           <!-- Dual-Measure Toggle (visible only for Custom team) -->
           <div class="field field-hidden" id="dual-measure-toggle-field">
             <label class="field-label">
-              Dual-Measure (L3/L2)
+              Dual-Measure
               <span class="tooltip-trigger">&#9432;
-                <span class="tooltip-content">Enable dual-measure mode. OTV is split 80/20 across L3 (regional) and L2 (geo) quotas, each with independent PCR and uplift rates.</span>
+                <span class="tooltip-content">Enable dual-measure mode. OTV is split across two quotas, each with independent PCR and uplift rates.</span>
               </span>
             </label>
             <div class="toggle-field">
               <div class="toggle" id="dual-measure-toggle" role="switch" aria-checked="false" tabindex="0"></div>
               <span class="toggle-label" id="dual-measure-label">Off</span>
+            </div>
+          </div>
+
+          <!-- Custom measure labels (visible only for Custom team with dual-measure on) -->
+          <div class="field dual-measure-only custom-dm-only field-full" id="custom-labels-row">
+            <div class="dm-quota-row dm-custom-labels-row">
+              <div class="dm-quota-cell">
+                <label class="field-label">Primary Measure Label</label>
+                <div class="input-wrap">
+                  <input type="text" id="primary-label-input" value="Primary">
+                </div>
+              </div>
+              <div class="dm-quota-cell">
+                <label class="field-label">Secondary Measure Label</label>
+                <div class="input-wrap">
+                  <input type="text" id="secondary-label-input" value="Secondary">
+                </div>
+              </div>
+              <div class="dm-quota-cell">
+                <label class="field-label">
+                  OTV Split
+                  <span class="tooltip-trigger">&#9432;
+                    <span class="tooltip-content">Percentage of OTV allocated to each measure. Must total 100%. Default is 80/20.</span>
+                  </span>
+                </label>
+                <div class="dm-split-inputs">
+                  <div class="input-wrap dm-split-wrap">
+                    <input type="text" id="primary-split-input" value="80" class="has-suffix">
+                    <span class="input-suffix">%</span>
+                  </div>
+                  <span class="dm-split-slash">/</span>
+                  <div class="input-wrap dm-split-wrap">
+                    <input type="text" id="secondary-split-input" value="20" class="has-suffix">
+                    <span class="input-suffix">%</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -152,9 +189,9 @@
             <div class="dm-quota-row">
               <div class="dm-quota-cell">
                 <label class="field-label">
-                  L3 NARR Quota
+                  <span class="dm-primary-label">L3</span> NARR Quota
                   <span class="tooltip-trigger">&#9432;
-                    <span class="tooltip-content">Regional-level NARR quota target. L3 PCR = (OTV × 80%) / L3 NARR Quota.</span>
+                    <span class="tooltip-content dm-primary-tooltip">Primary measure NARR quota target.</span>
                   </span>
                 </label>
                 <div class="input-wrap">
@@ -164,9 +201,9 @@
               </div>
               <div class="dm-quota-cell">
                 <label class="field-label">
-                  L3 Quota Credit
+                  <span class="dm-primary-label">L3</span> Quota Credit
                   <span class="tooltip-trigger">&#9432;
-                    <span class="tooltip-content">Cumulative NARR retired YTD within your L3 region, before this deal.</span>
+                    <span class="tooltip-content">Cumulative NARR retired YTD within your primary measure, before this deal.</span>
                   </span>
                 </label>
                 <div class="input-wrap">
@@ -175,7 +212,7 @@
                 </div>
               </div>
               <div class="dm-quota-cell">
-                <label class="field-label">L3 Attainment</label>
+                <label class="field-label"><span class="dm-primary-label">L3</span> Attainment</label>
                 <div class="input-wrap">
                   <input type="text" id="l3-attainment" class="computed has-suffix" readonly tabindex="-1">
                   <span class="input-suffix">%</span>
@@ -187,9 +224,9 @@
             <div class="dm-quota-row">
               <div class="dm-quota-cell">
                 <label class="field-label">
-                  L2 NARR Quota
+                  <span class="dm-secondary-label">L2</span> NARR Quota
                   <span class="tooltip-trigger">&#9432;
-                    <span class="tooltip-content">Geo-level NARR quota target. L2 PCR = (OTV × 20%) / L2 NARR Quota.</span>
+                    <span class="tooltip-content dm-secondary-tooltip">Secondary measure NARR quota target.</span>
                   </span>
                 </label>
                 <div class="input-wrap">
@@ -199,9 +236,9 @@
               </div>
               <div class="dm-quota-cell">
                 <label class="field-label">
-                  L2 Quota Credit
+                  <span class="dm-secondary-label">L2</span> Quota Credit
                   <span class="tooltip-trigger">&#9432;
-                    <span class="tooltip-content">Cumulative NARR retired YTD at the geo level, before this deal.</span>
+                    <span class="tooltip-content">Cumulative NARR retired YTD within your secondary measure, before this deal.</span>
                   </span>
                 </label>
                 <div class="input-wrap">
@@ -210,7 +247,7 @@
                 </div>
               </div>
               <div class="dm-quota-cell">
-                <label class="field-label">L2 Attainment</label>
+                <label class="field-label"><span class="dm-secondary-label">L2</span> Attainment</label>
                 <div class="input-wrap">
                   <input type="text" id="l2-attainment" class="computed has-suffix" readonly tabindex="-1">
                   <span class="input-suffix">%</span>
@@ -219,13 +256,13 @@
             </div>
           </div>
           <div class="field dual-measure-only">
-            <label class="field-label">L3 PCR</label>
+            <label class="field-label"><span class="dm-primary-label">L3</span> PCR</label>
             <div class="input-wrap">
               <input type="text" id="l3-pcr" class="computed" readonly tabindex="-1">
             </div>
           </div>
           <div class="field dual-measure-only">
-            <label class="field-label">L2 PCR</label>
+            <label class="field-label"><span class="dm-secondary-label">L2</span> PCR</label>
             <div class="input-wrap">
               <input type="text" id="l2-pcr" class="computed" readonly tabindex="-1">
             </div>
@@ -277,7 +314,7 @@
             <label class="field-label">
               RARR Rate
               <span class="tooltip-trigger">&#9432;
-                <span class="tooltip-content">LaTam bonus commission rate applied to Renewed ARR. Paid on top of standard NARR-based commission.</span>
+                <span class="tooltip-content">Bonus commission rate applied to Renewed ARR. Paid on top of standard NARR-based commission.</span>
               </span>
             </label>
             <div class="input-wrap">
@@ -290,8 +327,8 @@
         <div class="dm-uplift-grid dual-measure-only" id="uplift-dual">
           <div class="dm-uplift-header">
             <div class="dm-uplift-label"></div>
-            <div class="dm-uplift-col-header">L3</div>
-            <div class="dm-uplift-col-header">L2</div>
+            <div class="dm-uplift-col-header dm-primary-label">L3</div>
+            <div class="dm-uplift-col-header dm-secondary-label">L2</div>
           </div>
           <div class="dm-uplift-row">
             <div class="dm-uplift-label">
@@ -434,9 +471,9 @@
           </div>
           <div class="field dual-measure-only" id="l3-region-field">
             <label class="field-label">
-              Deal is within my L3 region
+              <span id="l3-region-toggle-label">Deal is within my L3 region</span>
               <span class="tooltip-trigger">&#9432;
-                <span class="tooltip-content">When on, this deal earns commission on both L3 and L2 measures (L3 rolls up to L2). When off, commission is earned on L2 only.</span>
+                <span class="tooltip-content" id="l3-region-tooltip">When on, this deal earns commission on both measures (primary rolls up to secondary). When off, commission is earned on secondary measure only.</span>
               </span>
             </label>
             <div class="toggle-field">

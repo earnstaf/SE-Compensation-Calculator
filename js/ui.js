@@ -39,6 +39,14 @@
   const multiYearField = $('multi-year-field');
   const psaPendingNote = $('psa-pending-note');
   const dualMeasureToggleField = $('dual-measure-toggle-field');
+  const customLabelsRow = $('custom-labels-row');
+  const primaryLabelInput = $('primary-label-input');
+  const secondaryLabelInput = $('secondary-label-input');
+  const primarySplitInput = $('primary-split-input');
+  const secondarySplitInput = $('secondary-split-input');
+  const l3RegionToggleLabelEl = $('l3-region-toggle-label');
+  const l3RegionTooltip = $('l3-region-tooltip');
+  const newLogoFieldLabel = document.querySelector('#new-logo-toggle').closest('.field').querySelector('.field-label');
 
   const newLogoToggle = $('new-logo-toggle');
   const newLogoLabel = $('new-logo-label');
@@ -57,6 +65,10 @@
   let dualMeasureActive = false;
   let dualMeasureLocked = false;
   let settingsLoaded = false;
+  let currentPrimaryLabel = 'L3';
+  let currentSecondaryLabel = 'L2';
+  let currentPrimarySplit = 0.80;
+  let currentSecondarySplit = 0.20;
 
   function saveSettings() {
     if (!settingsLoaded || !window.appSettings) return;
@@ -97,8 +109,76 @@
   }
 
   const newLogoUpliftTooltip = fields.newLogoUplift.closest('.field').querySelector('.tooltip-content');
+  const newLogoUpliftLabel = fields.newLogoUplift.closest('.field').querySelector('.field-label');
   const defaultNlTooltip = 'Additive modifier applied when the deal is a new logo (no existing contract). Only applies when New Logo toggle is on.';
-  const mspNlTooltip = 'For PSA-MSP, "New Logo Uplift" corresponds to the "MSP NARR" accelerator in the comp plan. Only applies when New Logo toggle is on.';
+  const mspNlTooltip = 'For PSA-MSP, "MSP NARR Uplift" corresponds to the "MSP NARR" accelerator in the comp plan. Only applies when MSP NARR toggle is on.';
+  const defaultNlLabel = 'New Logo Uplift';
+  const mspNlLabel = 'MSP NARR Uplift';
+
+  // Store the original New Logo toggle label element for relabeling
+  const newLogoToggleFieldLabel = newLogoToggle.closest('.field').querySelector('.field-label');
+  const newLogoToggleLabelSpan = newLogoToggleFieldLabel.childNodes[0]; // text node
+
+  function updateDualMeasureLabels(primary, secondary) {
+    currentPrimaryLabel = primary;
+    currentSecondaryLabel = secondary;
+    document.querySelectorAll('.dm-primary-label').forEach(el => el.textContent = primary);
+    document.querySelectorAll('.dm-secondary-label').forEach(el => el.textContent = secondary);
+
+    // Update the deal-level toggle label
+    l3RegionToggleLabelEl.textContent = 'Deal is within ' + primary;
+
+    // Update tooltips
+    document.querySelectorAll('.dm-primary-tooltip').forEach(el => {
+      el.textContent = primary + ' measure NARR quota target. ' + primary + ' PCR = (OTV × ' + Math.round(currentPrimarySplit * 100) + '%) / ' + primary + ' NARR Quota.';
+    });
+    document.querySelectorAll('.dm-secondary-tooltip').forEach(el => {
+      el.textContent = secondary + ' measure NARR quota target. ' + secondary + ' PCR = (OTV × ' + Math.round(currentSecondarySplit * 100) + '%) / ' + secondary + ' NARR Quota.';
+    });
+  }
+
+  function updateNewLogoLabel(isMsp) {
+    if (isMsp) {
+      // Change "New Logo Uplift" to "MSP NARR Uplift" in single-measure uplift
+      newLogoUpliftLabel.innerHTML = 'MSP NARR Uplift <span class="tooltip-trigger">&#9432;<span class="tooltip-content">' + mspNlTooltip + '</span></span>';
+      // Change the deal toggle label
+      newLogoToggleFieldLabel.innerHTML = 'MSP NARR <span class="tooltip-trigger">&#9432;<span class="tooltip-content">Toggle on for MSP NARR deals. When enabled, MSP NARR Uplift is added to the commission rate.</span></span>';
+    } else {
+      newLogoUpliftLabel.innerHTML = defaultNlLabel + ' <span class="tooltip-trigger">&#9432;<span class="tooltip-content">' + defaultNlTooltip + '</span></span>';
+      newLogoToggleFieldLabel.innerHTML = 'New Logo <span class="tooltip-trigger">&#9432;<span class="tooltip-content">Toggle on if this is a new logo deal (no existing contract). When enabled, New Logo Uplift is added to the commission rate.</span></span>';
+    }
+    // Re-bind tooltips for newly created elements
+    rebindTooltips(newLogoUpliftLabel);
+    rebindTooltips(newLogoToggleFieldLabel);
+  }
+
+  function rebindTooltips(container) {
+    container.querySelectorAll('.tooltip-trigger').forEach(trigger => {
+      const tip = trigger.querySelector('.tooltip-content');
+      if (!tip) return;
+      trigger.addEventListener('mouseenter', function () {
+        const rect = this.getBoundingClientRect();
+        const tipWidth = 240;
+        const gap = 8;
+        tip.style.display = 'block';
+        tip.classList.remove('arrow-down', 'arrow-up');
+        let left = rect.left + rect.width / 2 - tipWidth / 2;
+        left = Math.max(8, Math.min(left, window.innerWidth - tipWidth - 8));
+        tip.style.left = left + 'px';
+        const tipHeight = tip.offsetHeight;
+        if (rect.top - tipHeight - gap >= 0) {
+          tip.style.top = (rect.top - tipHeight - gap) + 'px';
+          tip.classList.add('arrow-down');
+        } else {
+          tip.style.top = (rect.bottom + gap) + 'px';
+          tip.classList.add('arrow-up');
+        }
+      });
+      trigger.addEventListener('mouseleave', function () {
+        tip.style.display = 'none';
+      });
+    });
+  }
 
   function parseCurrency(str) {
     if (!str) return 0;
@@ -166,8 +246,13 @@
     dualMeasureActive = active;
     if (active) {
       inputPanels.classList.add('dual-measure-active');
+      // Show custom labels row only for Custom team
+      if (currentTeam === 'custom') {
+        customLabelsRow.classList.remove('field-hidden');
+      }
     } else {
       inputPanels.classList.remove('dual-measure-active');
+      customLabelsRow.classList.add('field-hidden');
     }
   }
 
@@ -196,18 +281,19 @@
       }
     }
 
-    if (preset.latamMode) {
+    // RARR mode: LATAM or PSA-MSP
+    if (preset.latamMode || preset.rarrMode) {
       rarrRateField.classList.remove('field-hidden');
       fields.rarrRate.value = preset.rarrRate || 0.001;
     } else {
       rarrRateField.classList.add('field-hidden');
     }
 
-    if (preset.psaPending) {
-      psaPendingNote.classList.remove('field-hidden');
-    } else {
-      psaPendingNote.classList.add('field-hidden');
-    }
+    // PSA pending note removed — all PSA teams now have confirmed values
+    psaPendingNote.classList.add('field-hidden');
+
+    // PSA-MSP: relabel New Logo to MSP NARR
+    updateNewLogoLabel(preset.mspMode || false);
 
     // Dual-measure handling
     if (preset.dualMeasure) {
@@ -218,6 +304,23 @@
       dualMeasureToggle.classList.add('disabled');
       dualMeasureLabel.textContent = 'On';
       dualMeasureToggleField.classList.remove('field-hidden');
+
+      // Set split ratio
+      const split = preset.dualMeasureSplit || [0.80, 0.20];
+      currentPrimarySplit = split[0];
+      currentSecondarySplit = split[1];
+      primarySplitInput.value = Math.round(split[0] * 100);
+      secondarySplitInput.value = Math.round(split[1] * 100);
+
+      // Set labels
+      const pLabel = preset.primaryLabel || 'L3';
+      const sLabel = preset.secondaryLabel || 'L2';
+      primaryLabelInput.value = pLabel;
+      secondaryLabelInput.value = sLabel;
+      updateDualMeasureLabels(pLabel, sLabel);
+
+      // Hide custom label/split fields for preset teams
+      customLabelsRow.classList.add('field-hidden');
 
       fields.l3NewLogoUplift.value = preset.l3NewLogoUplift;
       fields.l3MultiYearUplift.value = preset.l3MultiYearUplift;
@@ -230,6 +333,10 @@
       dualMeasureLocked = false;
       dualMeasureToggle.classList.remove('disabled');
       dualMeasureToggleField.classList.remove('field-hidden');
+      // Show custom label/split fields when dual-measure is active
+      if (dualMeasureActive) {
+        customLabelsRow.classList.remove('field-hidden');
+      }
       // Don't change the active state — let it persist
     } else {
       // Single-measure preset: force off and hide toggle
@@ -240,9 +347,8 @@
       dualMeasureToggle.classList.add('disabled');
       dualMeasureLabel.textContent = 'Off';
       dualMeasureToggleField.classList.add('field-hidden');
+      customLabelsRow.classList.add('field-hidden');
     }
-
-    newLogoUpliftTooltip.textContent = teamKey === 'psa-msp' ? mspNlTooltip : defaultNlTooltip;
   }
 
   function checkTeamModified() {
@@ -286,6 +392,11 @@
     return preset && preset.latamMode;
   }
 
+  function isRarrMode() {
+    const preset = TEAM_PRESETS[currentTeam];
+    return preset && (preset.rarrMode || preset.latamMode);
+  }
+
   function getInputs() {
     const base = {
       ote: parseCurrency(fields.ote.value),
@@ -310,7 +421,9 @@
         l2MultiYearUplift: parseRate(fields.l2MultiYearUplift.value),
         l3AcceleratedPcr: parseRate(fields.l3AcceleratedPcr.value),
         l2AcceleratedPcr: parseRate(fields.l2AcceleratedPcr.value),
-        dealInL3: l3RegionToggle.classList.contains('active')
+        dealInL3: l3RegionToggle.classList.contains('active'),
+        primarySplit: currentPrimarySplit,
+        secondarySplit: currentSecondarySplit
       });
     }
 
@@ -322,7 +435,8 @@
       multiYearUplift: parseRate(fields.multiYearUplift.value),
       acceleratedPcr: parseRate(fields.acceleratedPcr.value),
       rarrRate: parseRate(fields.rarrRate.value),
-      latamMode: isLatamMode()
+      latamMode: isLatamMode(),
+      rarrMode: isRarrMode()
     });
   }
 
@@ -434,7 +548,7 @@
   function renderDualMeasureResults(r, inputs) {
     const hasQuota = inputs.l3NarrQuota > 0 || inputs.l2NarrQuota > 0;
     if (!inputs.ote || !hasQuota) {
-      resultsEl.innerHTML = '<div class="results-empty">Enter OTE, L3/L2 NARR Quotas, and deal details to see results.</div>';
+      resultsEl.innerHTML = '<div class="results-empty">Enter OTE, NARR Quotas, and deal details to see results.</div>';
       return;
     }
 
@@ -452,21 +566,24 @@
     }
     html += `</div>`;
 
-    // L3 section (only if deal is within L3)
+    const pLabel = currentPrimaryLabel;
+    const sLabel = currentSecondaryLabel;
+
+    // Primary section (only if deal is within primary)
     if (r.dealInL3 && r.l3) {
-      html += renderMeasureSection(r.l3, 'L3', 'Regional', inputs, dealNarr);
+      html += renderMeasureSection(r.l3, pLabel, 'Primary', inputs, dealNarr);
     }
 
-    // L2 section (always)
-    html += renderMeasureSection(r.l2, 'L2', 'Geo', inputs, dealNarr);
+    // Secondary section (always)
+    html += renderMeasureSection(r.l2, sLabel, 'Secondary', inputs, dealNarr);
 
     // Total
     if (r.totalCommission > 0) {
       html += `<div class="result-group">`;
       html += `<div class="result-group-title">Total</div>`;
       if (r.dealInL3 && r.l3) {
-        html += resultRow('L3 Commission', formatDollars(r.l3.commission));
-        html += resultRow('L2 Commission', formatDollars(r.l2.commission));
+        html += resultRow(pLabel + ' Commission', formatDollars(r.l3.commission));
+        html += resultRow(sLabel + ' Commission', formatDollars(r.l2.commission));
         html += `<div class="result-divider"></div>`;
       }
       html += resultRow('Total Deal Commission', formatDollars(r.totalCommission), 'positive', true);
@@ -563,15 +680,15 @@
       html += `<div class="rate-breakdown">${formatDollars(r.narrBelow)} × ${formatRateAsPercent(r.baseRate)}</div>`;
     }
 
-    // LaTam RARR commission
-    if (r.latamMode && inputs.renewedArr > 0) {
+    // RARR commission (LATAM or PSA-MSP)
+    if ((r.latamMode || r.rarrMode) && inputs.renewedArr > 0) {
       html += `<div class="result-divider"></div>`;
       html += resultRow('RARR Commission', formatDollars(r.rarrCommission), r.rarrCommission > 0 ? 'positive' : '');
       html += `<div class="rate-breakdown">${formatDollars(inputs.renewedArr)} × ${formatRateAsPercent(inputs.rarrRate)}</div>`;
     }
 
     // Total
-    if (hasNarr || (r.latamMode && r.rarrCommission > 0)) {
+    if (hasNarr || ((r.latamMode || r.rarrMode) && r.rarrCommission > 0)) {
       html += `<div class="result-divider"></div>`;
       html += resultRow('Total Deal Commission', formatDollars(r.totalCommission), 'positive', true);
     }
@@ -634,6 +751,32 @@
       recalculate();
       saveSettings();
     });
+  });
+
+  // Event: custom measure label inputs
+  primaryLabelInput.addEventListener('input', function () {
+    updateDualMeasureLabels(this.value || 'Primary', secondaryLabelInput.value || 'Secondary');
+    recalculate();
+  });
+  secondaryLabelInput.addEventListener('input', function () {
+    updateDualMeasureLabels(primaryLabelInput.value || 'Primary', this.value || 'Secondary');
+    recalculate();
+  });
+
+  // Event: split ratio inputs
+  primarySplitInput.addEventListener('input', function () {
+    const val = parseFloat(this.value) || 0;
+    currentPrimarySplit = val / 100;
+    currentSecondarySplit = 1 - currentPrimarySplit;
+    secondarySplitInput.value = Math.round(currentSecondarySplit * 100);
+    recalculate();
+  });
+  secondarySplitInput.addEventListener('input', function () {
+    const val = parseFloat(this.value) || 0;
+    currentSecondarySplit = val / 100;
+    currentPrimarySplit = 1 - currentSecondarySplit;
+    primarySplitInput.value = Math.round(currentPrimarySplit * 100);
+    recalculate();
   });
 
   // Event: OTE
@@ -740,6 +883,17 @@
     dualMeasureToggle.setAttribute('aria-checked', 'false');
     dualMeasureLabel.textContent = 'Off';
     dualMeasureToggleField.classList.remove('field-hidden');
+    customLabelsRow.classList.add('field-hidden');
+    primaryLabelInput.value = 'Primary';
+    secondaryLabelInput.value = 'Secondary';
+    primarySplitInput.value = '80';
+    secondarySplitInput.value = '20';
+    currentPrimarySplit = 0.80;
+    currentSecondarySplit = 0.20;
+    currentPrimaryLabel = 'L3';
+    currentSecondaryLabel = 'L2';
+    updateDualMeasureLabels('L3', 'L2');
+    updateNewLogoLabel(false);
 
     fields.ote.value = '';
     fields.narrQuota.value = '';
