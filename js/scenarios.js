@@ -133,16 +133,12 @@ const SCENARIOS = {
       ote: 100000,
       narrQuota: 10000000,
       narrQuotaCredit: 2000000,
-      newLogoUplift: 0.0005,
-      multiYearUplift: 0.0005,
-      acceleratedPcr: 0.0025,
       iarr: 1000000,
       renewedArr: 1000000,
       carr: 0,
       newModuleArr: 125000,
       newLogoDeal: false,
-      multiYearDeal: false,
-      team: 'mm-commercial'
+      multiYearDeal: false
     }
   },
   'upsell-churn': {
@@ -152,16 +148,12 @@ const SCENARIOS = {
       ote: 100000,
       narrQuota: 10000000,
       narrQuotaCredit: 2000000,
-      newLogoUplift: 0.0005,
-      multiYearUplift: 0.0005,
-      acceleratedPcr: 0.0025,
       iarr: 1000000,
       renewedArr: 900000,
       carr: 100000,
       newModuleArr: 125000,
       newLogoDeal: false,
-      multiYearDeal: false,
-      team: 'mm-commercial'
+      multiYearDeal: false
     }
   },
   'new-logo-overachieve': {
@@ -171,16 +163,12 @@ const SCENARIOS = {
       ote: 100000,
       narrQuota: 10000000,
       narrQuotaCredit: 9500000,
-      newLogoUplift: 0.0005,
-      multiYearUplift: 0.0005,
-      acceleratedPcr: 0.0025,
       iarr: 0,
       renewedArr: 0,
       carr: 0,
       newModuleArr: 1000000,
       newLogoDeal: true,
-      multiYearDeal: true,
-      team: 'mm-commercial'
+      multiYearDeal: true
     }
   },
   'new-logo': {
@@ -190,16 +178,12 @@ const SCENARIOS = {
       ote: 100000,
       narrQuota: 10000000,
       narrQuotaCredit: 2000000,
-      newLogoUplift: 0.0005,
-      multiYearUplift: 0.0005,
-      acceleratedPcr: 0.0025,
       iarr: 0,
       renewedArr: 0,
       carr: 0,
       newModuleArr: 1000000,
       newLogoDeal: true,
-      multiYearDeal: false,
-      team: 'mm-commercial'
+      multiYearDeal: false
     }
   }
 };

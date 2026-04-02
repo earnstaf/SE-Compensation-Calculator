@@ -12,6 +12,26 @@
     <header class="app-header">
       <h1>Pre-Sales Compensation Calculator</h1>
       <div class="header-actions">
+        <div class="team-selector">
+          <label class="team-selector-label" for="team-select">Team</label>
+          <select id="team-select">
+            <option value="custom">Custom</option>
+            <option value="apac">APAC</option>
+            <option value="emea">EMEA</option>
+            <option value="gee-ve">GEE-VE Strategists</option>
+            <option value="ise-emea">ISE - EMEA</option>
+            <option value="ise-mm-commercial">ISE - MM/Commercial</option>
+            <option value="ise-pubsec">ISE - PubSec</option>
+            <option value="japan">Japan</option>
+            <option value="latam">LATAM</option>
+            <option value="mm-commercial">MM/Commercial</option>
+            <option value="psa-gsi-spa">PSA - GSI &amp; SPA</option>
+            <option value="psa-hybrid">PSA - Hybrid</option>
+            <option value="psa-msp">PSA - MSP</option>
+            <option value="us-canada">US &amp; Canada (excl Fed)</option>
+            <option value="us-pubsec">US PubSec</option>
+          </select>
+        </div>
         <div class="scenarios-bar">
           <button class="scenario-btn" data-scenario="upsell-existing" title="Upsell to existing customer, no churn, below 100% attainment.">Upsell Existing</button>
           <button class="scenario-btn" data-scenario="upsell-churn" title="Upsell where the customer churns a module. CARR shown for context only.">Upsell with Churn</button>
@@ -27,33 +47,6 @@
       <div class="section">
         <div class="section-title">User Profile</div>
         <div class="field-grid">
-          <div class="field">
-            <label class="field-label">
-              Team
-              <span class="tooltip-trigger">&#9432;
-                <span class="tooltip-content">Select your SE team to auto-populate uplift rate defaults. You can still override values manually.</span>
-              </span>
-            </label>
-            <div class="input-wrap">
-              <select id="team-select">
-                <option value="custom">Custom</option>
-                <option value="apac">APAC</option>
-                <option value="emea">EMEA</option>
-                <option value="gee-ve">GEE-VE Strategists</option>
-                <option value="ise-emea">ISE - EMEA</option>
-                <option value="ise-mm-commercial">ISE - MM/Commercial</option>
-                <option value="ise-pubsec">ISE - PubSec</option>
-                <option value="japan">Japan</option>
-                <option value="latam">LATAM</option>
-                <option value="mm-commercial">MM/Commercial</option>
-                <option value="psa-gsi-spa">PSA - GSI &amp; SPA</option>
-                <option value="psa-hybrid">PSA - Hybrid</option>
-                <option value="psa-msp">PSA - MSP</option>
-                <option value="us-canada">US &amp; Canada (excl Fed)</option>
-                <option value="us-pubsec">US PubSec</option>
-              </select>
-            </div>
-          </div>
           <div class="field">
             <label class="field-label">
               OTE

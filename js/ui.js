@@ -359,16 +359,9 @@
       if (!scenario) return;
       const v = scenario.values;
 
-      if (v.team) {
-        applyTeamPreset(v.team);
-      }
-
       setCurrencyDisplay(fields.ote, v.ote);
       setCurrencyDisplay(fields.narrQuota, v.narrQuota);
       setCurrencyDisplay(fields.narrQuotaCredit, v.narrQuotaCredit);
-      fields.newLogoUplift.value = v.newLogoUplift;
-      fields.multiYearUplift.value = v.multiYearUplift;
-      fields.acceleratedPcr.value = v.acceleratedPcr;
       setCurrencyDisplay(fields.iarr, v.iarr);
       setCurrencyDisplay(fields.renewedArr, v.renewedArr);
       setCurrencyDisplay(fields.carr, v.carr);
