@@ -1,6 +1,6 @@
 {
   "name": "se-comp-calc",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Pre-Sales Compensation Calculator",
   "main": "main.js",
   "scripts": {
