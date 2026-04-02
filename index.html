@@ -9,7 +9,11 @@
 </head>
 <body>
   <noscript>This calculator requires JavaScript to run.</noscript>
-  <div class="app">
+  <div class="app deal-mode">
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="deal">Deal Calculator</button>
+      <button class="mode-tab" data-mode="annual">Annual Projections</button>
+    </div>
     <header class="app-header">
       <h1>Pre-Sales Compensation Calculator</h1>
       <div class="header-actions">
@@ -33,13 +37,13 @@
             <option value="us-pubsec">US PubSec</option>
           </select>
         </div>
-        <div class="scenarios-bar">
+        <div class="scenarios-bar deal-mode-only">
           <button class="scenario-btn" data-scenario="upsell-existing" title="Upsell to existing customer, no churn, below 100% attainment.">Upsell Existing</button>
           <button class="scenario-btn" data-scenario="upsell-churn" title="Upsell where the customer churns a module. CARR shown for context only.">Upsell with Churn</button>
           <button class="scenario-btn" data-scenario="new-logo-overachieve" title="New logo multi-year deal that pushes past 100% attainment, triggering accelerated PCR.">New Logo + Multi-Year</button>
           <button class="scenario-btn" data-scenario="new-logo" title="New logo deal, below 100% attainment. New Logo Uplift applies.">New Logo Only</button>
         </div>
-        <button class="btn btn-compare" id="btn-compare">Compare Deals</button>
+        <button class="btn btn-compare deal-mode-only" id="btn-compare">Compare Deals</button>
         <button class="btn btn-danger" id="btn-reset">Clear</button>
       </div>
     </header>
@@ -396,7 +400,7 @@
       </div>
 
       <!-- Deal Details Section -->
-      <div class="section">
+      <div class="section deal-mode-only">
         <div class="section-title">Deal Details</div>
         <div class="field-grid">
           <div class="field">
@@ -486,8 +490,127 @@
         </div>
       </div>
 
+      <!-- Annual Projections Inputs -->
+      <div class="section annual-mode-only" id="annual-inputs-section">
+        <div class="section-title">Annual Projection Inputs</div>
+        <div class="field-grid">
+          <!-- Single-measure attainment -->
+          <div class="field field-full single-measure-only" id="annual-attainment-field">
+            <label class="field-label">
+              Target NARR Attainment
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Your projected full-year quota attainment percentage. Drag the slider to see how your compensation changes at different attainment levels.</span>
+              </span>
+            </label>
+            <div class="slider-input-row">
+              <input type="range" id="annual-attainment-slider" min="0" max="200" value="100" step="1">
+              <div class="input-wrap slider-text-input">
+                <input type="text" id="annual-attainment-input" value="100" class="has-suffix">
+                <span class="input-suffix">%</span>
+              </div>
+            </div>
+          </div>
+          <!-- Single-measure total NARR (auto-calculated) -->
+          <div class="field single-measure-only">
+            <label class="field-label">Total Projected NARR</label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="annual-total-narr" class="has-prefix computed" readonly tabindex="-1">
+            </div>
+          </div>
+          <div class="field single-measure-only"></div>
+
+          <!-- Dual-measure attainment sliders -->
+          <div class="field field-full dual-measure-only" id="annual-dm-attainment-field">
+            <div class="dm-quota-row" style="grid-template-columns: 1fr 1fr;">
+              <div class="dm-quota-cell">
+                <label class="field-label"><span class="dm-primary-label">L3</span> Target Attainment</label>
+                <div class="slider-input-row">
+                  <input type="range" id="annual-l3-attainment-slider" min="0" max="200" value="100" step="1">
+                  <div class="input-wrap slider-text-input">
+                    <input type="text" id="annual-l3-attainment-input" value="100" class="has-suffix">
+                    <span class="input-suffix">%</span>
+                  </div>
+                </div>
+              </div>
+              <div class="dm-quota-cell">
+                <label class="field-label"><span class="dm-secondary-label">L2</span> Target Attainment</label>
+                <div class="slider-input-row">
+                  <input type="range" id="annual-l2-attainment-slider" min="0" max="200" value="100" step="1">
+                  <div class="input-wrap slider-text-input">
+                    <input type="text" id="annual-l2-attainment-input" value="100" class="has-suffix">
+                    <span class="input-suffix">%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Dual-measure total NARRs (auto-calculated) -->
+          <div class="field dual-measure-only">
+            <label class="field-label"><span class="dm-primary-label">L3</span> Total NARR</label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="annual-l3-total-narr" class="has-prefix computed" readonly tabindex="-1">
+            </div>
+          </div>
+          <div class="field dual-measure-only">
+            <label class="field-label"><span class="dm-secondary-label">L2</span> Total NARR</label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="annual-l2-total-narr" class="has-prefix computed" readonly tabindex="-1">
+            </div>
+          </div>
+
+          <!-- Deal Mix -->
+          <div class="field">
+            <label class="field-label">
+              New Logo Mix
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Percentage of your total NARR expected from new logo deals. These percentages can overlap — a deal that is both New Logo and Multi-Year counts in both categories.</span>
+              </span>
+            </label>
+            <div class="slider-input-row">
+              <input type="range" id="annual-nl-pct-slider" min="0" max="100" value="30" step="1">
+              <div class="input-wrap slider-text-input">
+                <input type="text" id="annual-nl-pct-input" value="30" class="has-suffix">
+                <span class="input-suffix">%</span>
+              </div>
+            </div>
+          </div>
+          <div class="field" id="annual-my-pct-field">
+            <label class="field-label">
+              Multi-Year Mix
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Percentage of your total NARR expected from multi-year contracts (3+ years). These percentages can overlap — a deal that is both New Logo and Multi-Year counts in both categories.</span>
+              </span>
+            </label>
+            <div class="slider-input-row">
+              <input type="range" id="annual-my-pct-slider" min="0" max="100" value="20" step="1">
+              <div class="input-wrap slider-text-input">
+                <input type="text" id="annual-my-pct-input" value="20" class="has-suffix">
+                <span class="input-suffix">%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Renewed ARR (LATAM/PSA-MSP only) -->
+          <div class="field field-hidden" id="annual-renewed-arr-field">
+            <label class="field-label">
+              Total Renewed ARR
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Total ARR renewed across all deals for the year. Used to calculate RARR bonus commission.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="annual-renewed-arr" class="has-prefix" data-currency value="0">
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Deal B Section (Comparison Mode) -->
-      <div class="section field-hidden" id="deal-b-section">
+      <div class="section field-hidden deal-mode-only" id="deal-b-section">
         <div class="section-title">Deal B</div>
         <div class="field-grid">
           <div class="field">
