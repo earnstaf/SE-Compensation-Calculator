@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self';">
+  <title>Pre-Sales Compensation Calculator</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <h1>Pre-Sales Compensation Calculator</h1>
+      <div class="header-actions">
+        <div class="scenarios-bar">
+          <button class="scenario-btn" data-scenario="upsell-existing" title="Upsell to existing customer, no churn, below 100% attainment.">Upsell Existing</button>
+          <button class="scenario-btn" data-scenario="upsell-churn" title="Upsell where the customer churns a module. CARR shown for context only.">Upsell with Churn</button>
+          <button class="scenario-btn" data-scenario="new-logo-overachieve" title="New logo multi-year deal that pushes past 100% attainment, triggering accelerated PCR.">New Logo + Multi-Year</button>
+          <button class="scenario-btn" data-scenario="new-logo" title="New logo deal, below 100% attainment. New Logo Uplift applies.">New Logo Only</button>
+        </div>
+        <button class="btn btn-danger" id="btn-reset">Clear</button>
+      </div>
+    </header>
+
+    <div class="input-panels">
+      <!-- SE Profile Section -->
+      <div class="section">
+        <div class="section-title">User Profile</div>
+        <div class="field-grid">
+          <div class="field">
+            <label class="field-label">
+              Team
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Select your SE team to auto-populate uplift rate defaults. You can still override values manually.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <select id="team-select">
+                <option value="custom">Custom</option>
+                <option value="apac">APAC</option>
+                <option value="emea">EMEA</option>
+                <option value="gee-ve">GEE-VE Strategists</option>
+                <option value="ise-emea">ISE - EMEA</option>
+                <option value="ise-mm-commercial">ISE - MM/Commercial</option>
+                <option value="ise-pubsec">ISE - PubSec</option>
+                <option value="japan">Japan</option>
+                <option value="latam">LATAM</option>
+                <option value="mm-commercial">MM/Commercial</option>
+                <option value="psa-gsi-spa">PSA - GSI &amp; SPA</option>
+                <option value="psa-hybrid">PSA - Hybrid</option>
+                <option value="psa-msp">PSA - MSP</option>
+                <option value="us-canada">US &amp; Canada (excl Fed)</option>
+                <option value="us-pubsec">US PubSec</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">
+              OTE
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">On-Target Earnings. Total annual compensation (salary + variable) if quota is fully met.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="ote" class="has-prefix" data-currency>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">
+              Salary
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Fixed base pay. Always 80% of OTE. Auto-calculated.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="salary" class="has-prefix computed" readonly tabindex="-1">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">
+              OTV
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">On-Target Variable. The commission portion of OTE. Always 20% of OTE. Auto-calculated.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="otv" class="has-prefix computed" readonly tabindex="-1">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">
+              NARR Quota
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Annual Net ARR quota target assigned to the SE. The total NARR you must retire to hit 100% attainment.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="narr-quota" class="has-prefix" data-currency>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">
+              PCR
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Per-Commission Rate. Base rate earned per dollar of NARR. Calculated as OTV / NARR Quota.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <input type="text" id="pcr" class="computed" readonly tabindex="-1">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">
+              NARR Quota Credit
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Cumulative NARR retired year-to-date across all prior deals, before this deal. Used to determine current quota attainment.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="narr-quota-credit" class="has-prefix" data-currency>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">
+              NARR Quota Attainment
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Current quota attainment percentage before this deal. Calculated as NARR Quota Credit / NARR Quota.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <input type="text" id="narr-attainment" class="computed has-suffix" readonly tabindex="-1">
+              <span class="input-suffix">%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Uplift Rates Section -->
+      <div class="section">
+        <div class="section-title">Uplift Rates</div>
+        <div class="psa-pending-note field-hidden" id="psa-pending-note">Uplift values for this team are pending. Enter values manually.</div>
+        <div class="field-grid">
+          <div class="field">
+            <label class="field-label">
+              New Logo Uplift
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Additive modifier applied when the deal is a new logo (no existing contract). Only applies when New Logo toggle is on.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <input type="text" id="new-logo-uplift" value="0.0005">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">
+              Multi-Year Uplift
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Additive modifier applied when the deal is a multi-year contract (3+ years). Only applies when Multi-Year toggle is on.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <input type="text" id="multi-year-uplift" value="0.0005">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">
+              Accelerated PCR
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Additive modifier applied only to NARR that exceeds 100% quota attainment. Triggers the accelerator on overachievement.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <input type="text" id="accelerated-pcr" value="0.0025">
+            </div>
+          </div>
+          <div class="field field-hidden" id="rarr-rate-field">
+            <label class="field-label">
+              RARR Rate
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">LaTam bonus commission rate applied to Renewed ARR. Paid on top of standard NARR-based commission.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <input type="text" id="rarr-rate" value="0.001">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Deal Details Section -->
+      <div class="section">
+        <div class="section-title">Deal Details</div>
+        <div class="field-grid">
+          <div class="field">
+            <label class="field-label">
+              IARR
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Incumbent ARR. The ARR on the customer's expiring contract. Set to zero for new logos.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="iarr" class="has-prefix" data-currency value="0">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">
+              Renewed ARR
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">ARR being renewed on the new opportunity. The portion of IARR that carries over. Zero for new logos.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="renewed-arr" class="has-prefix" data-currency value="0">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">
+              CARR
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Churned ARR. Module or license churn from the expiring contract. Informational only — NOT used in the NARR or commission calculation.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="carr" class="has-prefix" data-currency value="0">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">
+              NARR
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Net new ARR on this deal (new modules or new logo ARR). Combined with Renewed ARR to form Day 1 ARR.</span>
+              </span>
+            </label>
+            <div class="input-wrap">
+              <span class="input-prefix">$</span>
+              <input type="text" id="new-module-arr" class="has-prefix" data-currency>
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">
+              New Logo
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Toggle on if this is a new logo deal (no existing contract). When enabled, New Logo Uplift is added to the commission rate.</span>
+              </span>
+            </label>
+            <div class="toggle-field">
+              <div class="toggle" id="new-logo-toggle" role="switch" aria-checked="false" tabindex="0"></div>
+              <span class="toggle-label" id="new-logo-label">No</span>
+            </div>
+          </div>
+          <div class="field" id="multi-year-field">
+            <label class="field-label">
+              Multi-Year
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Toggle on if this is a 3+ year contract. When enabled, Multi-Year Uplift is added to the commission rate.</span>
+              </span>
+            </label>
+            <div class="toggle-field">
+              <div class="toggle" id="multi-year-toggle" role="switch" aria-checked="false" tabindex="0"></div>
+              <span class="toggle-label" id="multi-year-label">No</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Panel -->
+    <div class="results-panel">
+      <div class="results-title">Commission Breakdown</div>
+      <div id="results">
+        <div class="results-empty">Enter OTE, NARR Quota, and deal details to see results.</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/calc-engine.js"></script>
+  <script src="js/scenarios.js"></script>
+  <script src="js/ui.js"></script>
+</body>
+</html>

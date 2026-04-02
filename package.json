@@ -1,0 +1,41 @@
+{
+  "name": "se-comp-calc",
+  "version": "1.0.0",
+  "description": "Pre-Sales Compensation Calculator",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "preview": "serve . -l 3000 --no-clipboard",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build": "electron-builder --win --mac"
+  },
+  "build": {
+    "appId": "com.se-comp-calc",
+    "productName": "Pre-Sales Compensation Calculator",
+    "directories": {
+      "output": "dist"
+    },
+    "asar": true,
+    "compression": "maximum",
+    "files": [
+      "main.js",
+      "index.html",
+      "css/**/*",
+      "js/**/*"
+    ],
+    "win": {
+      "target": "portable",
+      "icon": "assets/icon.png"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.png"
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "serve": "^14.2.6"
+  }
+}
