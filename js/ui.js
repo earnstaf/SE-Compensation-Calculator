@@ -767,15 +767,16 @@
       secondaryLabel: options.secondaryLabel || 'L2'
     };
 
+    const h = '[hidden]';
     if (options.dualMeasure) {
       data.profile = {
-        ote: formatDollars(inputs.ote),
-        salary: formatDollars(results.salary),
-        otv: formatDollars(results.otv),
+        ote: obfuscate ? h : formatDollars(inputs.ote),
+        salary: obfuscate ? h : formatDollars(results.salary),
+        otv: obfuscate ? h : formatDollars(results.otv),
         l3NarrQuota: formatDollars(inputs.l3NarrQuota),
         l2NarrQuota: formatDollars(inputs.l2NarrQuota),
-        l3Pcr: obfuscate ? '[hidden]' : formatRateAsPercent(results.l3Pcr),
-        l2Pcr: obfuscate ? '[hidden]' : formatRateAsPercent(results.l2Pcr),
+        l3Pcr: obfuscate ? h : formatRateAsPercent(results.l3Pcr),
+        l2Pcr: obfuscate ? h : formatRateAsPercent(results.l2Pcr),
         l3NarrQuotaCredit: formatDollars(inputs.l3NarrQuotaCredit),
         l2NarrQuotaCredit: formatDollars(inputs.l2NarrQuotaCredit),
         l3Attainment: inputs.l3NarrQuota > 0 ? (inputs.l3NarrQuotaCredit / inputs.l3NarrQuota * 100).toFixed(2) + '%' : 'N/A',
@@ -784,11 +785,11 @@
       };
     } else {
       data.profile = {
-        ote: formatDollars(inputs.ote),
-        salary: formatDollars(results.salary),
-        otv: formatDollars(results.otv),
+        ote: obfuscate ? h : formatDollars(inputs.ote),
+        salary: obfuscate ? h : formatDollars(results.salary),
+        otv: obfuscate ? h : formatDollars(results.otv),
         narrQuota: formatDollars(inputs.narrQuota),
-        pcr: obfuscate ? '[hidden]' : formatRateAsPercent(results.pcr),
+        pcr: obfuscate ? h : formatRateAsPercent(results.pcr),
         narrQuotaCredit: formatDollars(inputs.narrQuotaCredit),
         attainment: formatPercent(results.narrQuotaAttainment)
       };
@@ -807,7 +808,7 @@
       day1Arr: formatDollars(results.day1Arr),
       narrQuotaRetirement: formatDollars(results.narrQuotaRetirement),
       totalCommission: formatDollars(results.totalCommission),
-      otvAttainment: results.totalCommission > 0 ? formatPercent(results.otvAttainment) : 'N/A'
+      otvAttainment: obfuscate ? h : (results.totalCommission > 0 ? formatPercent(results.otvAttainment) : 'N/A')
     };
 
     if (options.dualMeasure) {
