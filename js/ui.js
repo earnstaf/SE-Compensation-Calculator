@@ -781,8 +781,8 @@
         l2Pcr: obfuscate ? h : formatRateAsPercent(results.l2Pcr),
         l3NarrQuotaCredit: formatDollars(inputs.l3NarrQuotaCredit),
         l2NarrQuotaCredit: formatDollars(inputs.l2NarrQuotaCredit),
-        l3Attainment: inputs.l3NarrQuota > 0 ? (inputs.l3NarrQuotaCredit / inputs.l3NarrQuota * 100).toFixed(2) + '%' : 'N/A',
-        l2Attainment: inputs.l2NarrQuota > 0 ? (inputs.l2NarrQuotaCredit / inputs.l2NarrQuota * 100).toFixed(2) + '%' : 'N/A',
+        l3Attainment: obfuscate ? h : (inputs.l3NarrQuota > 0 ? (inputs.l3NarrQuotaCredit / inputs.l3NarrQuota * 100).toFixed(2) + '%' : 'N/A'),
+        l2Attainment: obfuscate ? h : (inputs.l2NarrQuota > 0 ? (inputs.l2NarrQuotaCredit / inputs.l2NarrQuota * 100).toFixed(2) + '%' : 'N/A'),
         splitLabel: Math.round(inputs.primarySplit * 100) + '/' + Math.round(inputs.secondarySplit * 100)
       };
     } else {
@@ -793,7 +793,7 @@
         narrQuota: obfuscate ? h : formatDollars(inputs.narrQuota),
         pcr: obfuscate ? h : formatRateAsPercent(results.pcr),
         narrQuotaCredit: formatDollars(inputs.narrQuotaCredit),
-        attainment: formatPercent(results.narrQuotaAttainment)
+        attainment: obfuscate ? h : formatPercent(results.narrQuotaAttainment)
       };
     }
 
@@ -820,8 +820,8 @@
       data.results.l2 = extractMeasureData(results.l2, data.secondaryLabel, inputs, obfuscate);
       data.results.dealInL3 = results.dealInL3;
     } else {
-      data.results.preDealAttainment = formatPercent(results.narrQuotaAttainment);
-      data.results.postDealAttainment = formatPercent(results.postDealAttainment);
+      data.results.preDealAttainment = obfuscate ? h : formatPercent(results.narrQuotaAttainment);
+      data.results.postDealAttainment = obfuscate ? h : formatPercent(results.postDealAttainment);
       data.results.baseRate = obfuscate ? '[hidden]' : formatRateAsPercent(results.baseRate);
       data.results.baseRateLabel = buildRateLabel(results, inputs);
       data.results.straddlesThreshold = results.straddlesThreshold;
@@ -846,8 +846,8 @@
     const rateLabel = buildMeasureRateLabel(label, inputs.newLogoDeal, inputs.multiYearDeal);
     const d = {
       label: label,
-      preDealAttainment: formatPercent(measure.narrQuotaAttainment),
-      postDealAttainment: formatPercent(measure.postDealAttainment),
+      preDealAttainment: obfuscate ? '[hidden]' : formatPercent(measure.narrQuotaAttainment),
+      postDealAttainment: obfuscate ? '[hidden]' : formatPercent(measure.postDealAttainment),
       baseRate: obfuscate ? '[hidden]' : formatRateAsPercent(measure.baseRate),
       baseRateLabel: rateLabel,
       pcr: obfuscate ? '[hidden]' : formatRateAsPercent(measure.pcr),
