@@ -244,7 +244,7 @@ Expected: Day 1 ARR=$900,000, NARR=-$100,000. Commission=$0.
 ### Copy to Clipboard
 - Copy button (clipboard icon) in results panel header copies plain-text summary
 - "Copied!" toast fades after 1.5 seconds
-- "Hide PCR" checkbox obfuscates PCR values in output (shows `[hidden]`)
+- "Hide Sensitive Data" checkbox obfuscates OTE, Salary, OTV, PCR, and OTV Attainment in output (shows `[hidden]`)
 - Output mirrors results panel: User Profile → Deal Details → Results
 - Supports single-measure, dual-measure, LATAM/PSA-MSP RARR, accelerator splits
 - Uses `navigator.clipboard.writeText()` (standard Web API, works in sandbox)
@@ -255,7 +255,7 @@ Expected: Day 1 ARR=$900,000, NARR=-$100,000. Commission=$0.
 - Crimson/navy color scheme matching the app
 - IPC: renderer sends HTML string → main.js creates hidden BrowserWindow → loads via data URI → printToPDF → save dialog → write file
 - Footer shows app version; version passed via `_appVersion` in `settings:load` response
-- Respects "Hide PCR" checkbox state
+- Respects "Hide Sensitive Data" checkbox state
 
 ### Both Export Types in Comparison Mode
 - Include Deal A, Deal B, and Comparison summary sections
