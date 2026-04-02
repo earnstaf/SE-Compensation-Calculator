@@ -91,10 +91,29 @@
   let settingsLoaded = false;
   let appVersion = '';
   let comparisonMode = false;
+  let annualMode = false;
   let currentPrimaryLabel = 'L3';
   let currentSecondaryLabel = 'L2';
   let currentPrimarySplit = 0.80;
   let currentSecondarySplit = 0.20;
+
+  // Annual mode elements
+  const annualAttainmentSlider = $('annual-attainment-slider');
+  const annualAttainmentInput = $('annual-attainment-input');
+  const annualTotalNarr = $('annual-total-narr');
+  const annualL3AttainmentSlider = $('annual-l3-attainment-slider');
+  const annualL3AttainmentInput = $('annual-l3-attainment-input');
+  const annualL2AttainmentSlider = $('annual-l2-attainment-slider');
+  const annualL2AttainmentInput = $('annual-l2-attainment-input');
+  const annualL3TotalNarr = $('annual-l3-total-narr');
+  const annualL2TotalNarr = $('annual-l2-total-narr');
+  const annualNlPctSlider = $('annual-nl-pct-slider');
+  const annualNlPctInput = $('annual-nl-pct-input');
+  const annualMyPctSlider = $('annual-my-pct-slider');
+  const annualMyPctInput = $('annual-my-pct-input');
+  const annualMyPctField = $('annual-my-pct-field');
+  const annualRenewedArrField = $('annual-renewed-arr-field');
+  const annualRenewedArr = $('annual-renewed-arr');
 
   function saveSettings() {
     if (!settingsLoaded || !window.appSettings) return;
@@ -109,7 +128,14 @@
       data.l2NarrQuota = fields.l2NarrQuota.value;
       data.l3NarrQuotaCredit = fields.l3NarrQuotaCredit.value;
       data.l2NarrQuotaCredit = fields.l2NarrQuotaCredit.value;
+      data.l3TargetAttainment = annualL3AttainmentInput.value;
+      data.l2TargetAttainment = annualL2AttainmentInput.value;
     }
+    // Annual mode fields (always save regardless of mode)
+    data.targetAttainment = annualAttainmentInput.value;
+    data.newLogoPct = annualNlPctInput.value;
+    data.multiYearPct = annualMyPctInput.value;
+    data.totalRenewedArr = annualRenewedArr.value;
     window.appSettings.save(data);
   }
 
@@ -128,6 +154,13 @@
       if (s.l2NarrQuota) { fields.l2NarrQuota.value = s.l2NarrQuota; }
       if (s.l3NarrQuotaCredit) { fields.l3NarrQuotaCredit.value = s.l3NarrQuotaCredit; }
       if (s.l2NarrQuotaCredit) { fields.l2NarrQuotaCredit.value = s.l2NarrQuotaCredit; }
+      // Annual mode fields
+      if (s.targetAttainment) { annualAttainmentInput.value = s.targetAttainment; annualAttainmentSlider.value = s.targetAttainment; }
+      if (s.newLogoPct) { annualNlPctInput.value = s.newLogoPct; annualNlPctSlider.value = s.newLogoPct; }
+      if (s.multiYearPct) { annualMyPctInput.value = s.multiYearPct; annualMyPctSlider.value = s.multiYearPct; }
+      if (s.totalRenewedArr) { annualRenewedArr.value = s.totalRenewedArr; }
+      if (s.l3TargetAttainment) { annualL3AttainmentInput.value = s.l3TargetAttainment; annualL3AttainmentSlider.value = s.l3TargetAttainment; }
+      if (s.l2TargetAttainment) { annualL2AttainmentInput.value = s.l2TargetAttainment; annualL2AttainmentSlider.value = s.l2TargetAttainment; }
       settingsLoaded = true;
       recalculate();
     } catch (e) {
@@ -480,6 +513,10 @@
   }
 
   function recalculate() {
+    if (annualMode) {
+      recalculateAnnual();
+      return;
+    }
     if (comparisonMode) {
       recalculateComparison();
       return;
@@ -757,6 +794,296 @@
     setTimeout(() => {
       copyToast.classList.remove('visible');
     }, 1500);
+  }
+
+  // === Annual Projections Mode ===
+
+  function getAnnualInputs() {
+    const baseInputs = getInputs();
+    if (baseInputs.dualMeasure) {
+      return Object.assign(baseInputs, {
+        l3TargetAttainment: (parseFloat(annualL3AttainmentInput.value) || 0) / 100,
+        l2TargetAttainment: (parseFloat(annualL2AttainmentInput.value) || 0) / 100,
+        newLogoPct: (parseFloat(annualNlPctInput.value) || 0) / 100,
+        multiYearPct: (parseFloat(annualMyPctInput.value) || 0) / 100,
+        totalRenewedArr: parseCurrency(annualRenewedArr.value)
+      });
+    }
+    return Object.assign(baseInputs, {
+      targetAttainment: (parseFloat(annualAttainmentInput.value) || 0) / 100,
+      newLogoPct: (parseFloat(annualNlPctInput.value) || 0) / 100,
+      multiYearPct: (parseFloat(annualMyPctInput.value) || 0) / 100,
+      totalRenewedArr: parseCurrency(annualRenewedArr.value)
+    });
+  }
+
+  function recalculateAnnual() {
+    const inputs = getAnnualInputs();
+
+    // Update computed profile fields
+    setCurrencyDisplay(fields.salary, inputs.ote * 0.80);
+    setCurrencyDisplay(fields.otv, inputs.ote * 0.20);
+
+    if (inputs.dualMeasure) {
+      const otv = inputs.ote * 0.20;
+      const l3Pcr = inputs.l3NarrQuota > 0 ? (otv * currentPrimarySplit) / inputs.l3NarrQuota : 0;
+      const l2Pcr = inputs.l2NarrQuota > 0 ? (otv * currentSecondarySplit) / inputs.l2NarrQuota : 0;
+      fields.l3Pcr.value = inputs.l3NarrQuota > 0 ? formatRateAsPercent(l3Pcr) : '';
+      fields.l2Pcr.value = inputs.l2NarrQuota > 0 ? formatRateAsPercent(l2Pcr) : '';
+
+      // Update total NARR displays
+      const l3TotalNarr = inputs.l3NarrQuota * inputs.l3TargetAttainment;
+      const l2TotalNarr = inputs.l2NarrQuota * inputs.l2TargetAttainment;
+      setCurrencyDisplay({ value: '' }, l3TotalNarr);
+      annualL3TotalNarr.value = formatCurrency(l3TotalNarr);
+      annualL2TotalNarr.value = formatCurrency(l2TotalNarr);
+
+      const r = calculateDualMeasureAnnualCompensation(inputs);
+      renderAnnualResults(r, inputs);
+    } else {
+      const otv = inputs.ote * 0.20;
+      const pcr = inputs.narrQuota > 0 ? otv / inputs.narrQuota : 0;
+      fields.pcr.value = inputs.narrQuota > 0 ? formatRateAsPercent(pcr) : '';
+
+      // Update total NARR display
+      const totalNarr = inputs.narrQuota * inputs.targetAttainment;
+      annualTotalNarr.value = formatCurrency(totalNarr);
+
+      const r = calculateAnnualCompensation({
+        narrQuota: inputs.narrQuota,
+        targetAttainment: inputs.targetAttainment,
+        pcr: pcr,
+        newLogoUplift: inputs.newLogoUplift || parseRate(fields.newLogoUplift.value),
+        multiYearUplift: inputs.multiYearUplift || parseRate(fields.multiYearUplift.value),
+        acceleratedPcr: inputs.acceleratedPcr || parseRate(fields.acceleratedPcr.value),
+        newLogoPct: inputs.newLogoPct,
+        multiYearPct: inputs.multiYearPct,
+        rarrRate: (isLatamMode() || isRarrMode()) ? parseRate(fields.rarrRate.value) : 0,
+        totalRenewedArr: (isLatamMode() || isRarrMode()) ? inputs.totalRenewedArr : 0
+      });
+
+      const salary = inputs.ote * 0.80;
+      renderAnnualResults({ salary: salary, otv: otv, totalVariable: r.totalVariable, otvAttainment: otv > 0 ? r.totalVariable / otv : 0, single: r, rarrCommission: r.rarrCommission }, inputs);
+    }
+
+    if (settingsLoaded) saveSettings();
+  }
+
+  function renderAnnualResults(r, inputs) {
+    const hasQuota = inputs.dualMeasure
+      ? (inputs.l3NarrQuota > 0 || inputs.l2NarrQuota > 0)
+      : (inputs.narrQuota > 0);
+
+    if (!inputs.ote || !hasQuota) {
+      resultsEl.innerHTML = '<div class="results-empty">Enter OTE and NARR Quota to see annual projections.</div>';
+      updateActionButtons();
+      return;
+    }
+
+    let html = '';
+
+    // Attainment bar
+    if (inputs.dualMeasure) {
+      html += buildAttainmentBar(inputs.l3TargetAttainment, currentPrimaryLabel);
+      html += buildAttainmentBar(inputs.l2TargetAttainment, currentSecondaryLabel);
+    } else {
+      html += buildAttainmentBar(inputs.targetAttainment);
+    }
+
+    // Summary
+    const totalComp = r.salary + r.totalVariable;
+    html += `<div class="result-group">`;
+    html += `<div class="result-group-title">Annual Compensation Summary</div>`;
+    html += `<div class="result-row annual-total-row">
+      <span class="result-label">Total Annual Compensation</span>
+      <span class="result-value">${formatDollars(totalComp)}</span>
+    </div>`;
+    html += resultRow('Salary', formatDollars(r.salary));
+    html += resultRow('Total Variable Compensation', formatDollars(r.totalVariable), r.totalVariable > 0 ? 'positive' : '');
+    html += resultRow('OTV Attainment', formatPercent(r.otvAttainment));
+    html += `</div>`;
+
+    // Breakdown
+    if (inputs.dualMeasure) {
+      html += buildAnnualMeasureBreakdown(r.l3, currentPrimaryLabel, 'Primary');
+      html += buildAnnualMeasureBreakdown(r.l2, currentSecondaryLabel, 'Secondary');
+      if (r.rarrCommission > 0) {
+        html += `<div class="result-group">`;
+        html += `<div class="result-group-title">RARR Bonus</div>`;
+        html += resultRow('Renewed ARR', formatDollars(inputs.totalRenewedArr));
+        html += resultRow('RARR Commission', formatDollars(r.rarrCommission), 'positive');
+        html += `</div>`;
+      }
+    } else {
+      html += buildAnnualSingleBreakdown(r.single, inputs);
+    }
+
+    // Sensitivity table
+    html += buildSensitivityTable(inputs);
+
+    resultsEl.innerHTML = html;
+    updateActionButtons();
+  }
+
+  function buildAttainmentBar(attainment, label) {
+    const pct = attainment * 100;
+    // Map 0-200% to 0-100% bar width
+    const fillWidth = Math.min(100, pct / 2);
+    const indicatorLeft = Math.min(100, pct / 2);
+    const markers = [
+      { pct: 50, left: 25 },
+      { pct: 75, left: 37.5 },
+      { pct: 100, left: 50, cls: ' marker-100' },
+      { pct: 125, left: 62.5 },
+      { pct: 150, left: 75 }
+    ];
+
+    let title = label ? `<div class="result-group-title">${label} Attainment: ${pct.toFixed(0)}%</div>` : '';
+    let html = `<div class="attainment-bar">${title}<div class="attainment-bar-track">`;
+    html += `<div class="attainment-bar-fill" style="width:${fillWidth}%"></div>`;
+    for (const m of markers) {
+      html += `<div class="attainment-marker${m.cls || ''}" style="left:${m.left}%">${m.pct}%</div>`;
+    }
+    html += `<div class="attainment-indicator" style="left:${indicatorLeft}%"></div>`;
+    html += `</div></div>`;
+    return html;
+  }
+
+  function buildAnnualMeasureBreakdown(measureResult, label, sublabel) {
+    if (!measureResult) return '';
+    let html = `<div class="result-measure-section">`;
+    html += `<div class="result-measure-title">${label} (${sublabel})</div>`;
+    html += `<div class="result-group">`;
+    html += resultRow('Total NARR', formatDollars(measureResult.totalNarr));
+    html += resultRow('Target Attainment', formatPercent(measureResult.targetAttainment));
+    html += `</div>`;
+
+    html += buildBucketBreakdown(measureResult);
+
+    html += resultRow('Measure Commission', formatDollars(measureResult.totalVariable), 'positive');
+    html += `</div>`;
+    return html;
+  }
+
+  function buildAnnualSingleBreakdown(r, inputs) {
+    let html = `<div class="result-group">`;
+    html += `<div class="result-group-title">Commission Breakdown</div>`;
+    html += resultRow('Total NARR', formatDollars(r.totalNarr));
+
+    html += buildBucketBreakdown(r);
+
+    if (r.rarrCommission > 0) {
+      html += `<div class="result-divider"></div>`;
+      html += resultRow('RARR Commission', formatDollars(r.rarrCommission), 'positive');
+      html += `<div class="rate-breakdown">${formatDollars(inputs.totalRenewedArr)} × ${formatRateAsPercent((isLatamMode() || isRarrMode()) ? parseRate(fields.rarrRate.value) : 0)}</div>`;
+    }
+
+    html += `</div>`;
+    return html;
+  }
+
+  function buildBucketBreakdown(r) {
+    let html = '';
+
+    // Below 100%
+    if (r.commissionBelow > 0) {
+      html += `<div class="result-group-title" style="margin-top:8px">Below 100% Attainment</div>`;
+      for (const b of r.breakdown) {
+        if (b.narrBelow <= 0) continue;
+        html += resultRow(b.label, formatDollars(b.commissionBelow));
+        html += `<div class="rate-breakdown">${formatDollars(b.narrBelow)} × ${formatRateAsPercent(b.baseRate)}</div>`;
+      }
+      html += resultRow('Subtotal', formatDollars(r.commissionBelow));
+    }
+
+    // Above 100%
+    if (r.commissionAbove > 0) {
+      html += `<div class="result-divider"></div>`;
+      html += `<div class="result-group-title">Above 100% Attainment (Accelerated)</div>`;
+      for (const b of r.breakdown) {
+        if (b.narrAbove <= 0) continue;
+        html += resultRow(b.label, formatDollars(b.commissionAbove));
+        html += `<div class="rate-breakdown">${formatDollars(b.narrAbove)} × ${formatRateAsPercent(b.accelRate)}</div>`;
+      }
+      html += resultRow('Subtotal', formatDollars(r.commissionAbove));
+    }
+
+    return html;
+  }
+
+  function buildSensitivityTable(inputs) {
+    const levels = [0.50, 0.75, 1.00, 1.10, 1.20, 1.50];
+    const currentTarget = inputs.dualMeasure
+      ? ((inputs.l3TargetAttainment + inputs.l2TargetAttainment) / 2)
+      : inputs.targetAttainment;
+    const salary = inputs.ote * 0.80;
+    const otv = inputs.ote * 0.20;
+
+    // Find the single closest level to user's target
+    let closestLevel = levels[0];
+    let closestDiff = Infinity;
+    for (var i = 0; i < levels.length; i++) {
+      var diff = Math.abs(levels[i] - currentTarget);
+      if (diff < closestDiff) { closestDiff = diff; closestLevel = levels[i]; }
+    }
+
+    let rows = '';
+    for (const level of levels) {
+      let totalVariable;
+      if (inputs.dualMeasure) {
+        const r = calculateDualMeasureAnnualCompensation(Object.assign({}, inputs, {
+          l3TargetAttainment: level,
+          l2TargetAttainment: level
+        }));
+        totalVariable = r.totalVariable;
+      } else {
+        const pcr = inputs.narrQuota > 0 ? otv / inputs.narrQuota : 0;
+        const r = calculateAnnualCompensation({
+          narrQuota: inputs.narrQuota,
+          targetAttainment: level,
+          pcr: pcr,
+          newLogoUplift: parseRate(fields.newLogoUplift.value),
+          multiYearUplift: parseRate(fields.multiYearUplift.value),
+          acceleratedPcr: parseRate(fields.acceleratedPcr.value),
+          newLogoPct: inputs.newLogoPct,
+          multiYearPct: inputs.multiYearPct,
+          rarrRate: (isLatamMode() || isRarrMode()) ? parseRate(fields.rarrRate.value) : 0,
+          totalRenewedArr: (isLatamMode() || isRarrMode()) ? inputs.totalRenewedArr : 0
+        });
+        totalVariable = r.totalVariable;
+      }
+
+      const totalNarr = inputs.dualMeasure
+        ? (inputs.l3NarrQuota * level + inputs.l2NarrQuota * level)
+        : (inputs.narrQuota * level);
+      const totalComp = salary + totalVariable;
+      const otvAtt = otv > 0 ? totalVariable / otv : 0;
+
+      const cls = level === closestLevel ? ' class="sensitivity-active"' : '';
+      rows += `<tr${cls}>
+        <td>${(level * 100).toFixed(0)}%</td>
+        <td>${formatDollars(totalNarr)}</td>
+        <td>${formatDollars(totalVariable)}</td>
+        <td>${formatDollars(totalComp)}</td>
+        <td>${formatPercent(otvAtt)}</td>
+      </tr>`;
+    }
+
+    return `<div class="sensitivity-table-wrap">
+      <div class="sensitivity-table-title">Sensitivity Analysis</div>
+      <table class="sensitivity-table">
+        <thead>
+          <tr>
+            <th>Attainment</th>
+            <th>Total NARR</th>
+            <th>Variable Comp</th>
+            <th>Total Comp</th>
+            <th>OTV Attainment</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
   }
 
   function extractDisplayData(results, inputs, options) {
@@ -1569,9 +1896,263 @@
     fields.pcr.value = '';
     fields.narrAttainment.value = '';
 
+    // Reset annual fields
+    annualAttainmentSlider.value = 100;
+    annualAttainmentInput.value = '100';
+    annualL3AttainmentSlider.value = 100;
+    annualL3AttainmentInput.value = '100';
+    annualL2AttainmentSlider.value = 100;
+    annualL2AttainmentInput.value = '100';
+    annualNlPctSlider.value = 30;
+    annualNlPctInput.value = '30';
+    annualMyPctSlider.value = 20;
+    annualMyPctInput.value = '20';
+    annualRenewedArr.value = '0';
+    annualTotalNarr.value = '';
+    annualL3TotalNarr.value = '';
+    annualL2TotalNarr.value = '';
+
+    // Exit annual mode
+    if (annualMode) {
+      annualMode = false;
+      document.querySelectorAll('.mode-tab').forEach(function (t) {
+        t.classList.toggle('active', t.dataset.mode === 'deal');
+      });
+      appEl.classList.remove('annual-mode');
+      appEl.classList.add('deal-mode');
+      document.querySelector('.results-title').textContent = 'Commission Breakdown';
+    }
+
     resultsEl.innerHTML = '<div class="results-empty">Enter OTE, NARR Quota, and deal details to see results.</div>';
     updateActionButtons();
   });
+
+  // === Annual Export Functions ===
+
+  function getAnnualExportData(exportOpts) {
+    const inputs = getAnnualInputs();
+    const obfuscate = exportOpts.obfuscate;
+    const h = '[hidden]';
+    const salary = inputs.ote * 0.80;
+    const otv = inputs.ote * 0.20;
+
+    const data = {
+      date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+      teamLabel: exportOpts.teamLabel,
+      dualMeasure: exportOpts.dualMeasure,
+      primaryLabel: exportOpts.primaryLabel || 'L3',
+      secondaryLabel: exportOpts.secondaryLabel || 'L2'
+    };
+
+    data.profile = {
+      ote: obfuscate ? h : formatDollars(inputs.ote),
+      salary: obfuscate ? h : formatDollars(salary),
+      otv: obfuscate ? h : formatDollars(otv)
+    };
+
+    if (inputs.dualMeasure) {
+      data.profile.l3NarrQuota = obfuscate ? h : formatDollars(inputs.l3NarrQuota);
+      data.profile.l2NarrQuota = obfuscate ? h : formatDollars(inputs.l2NarrQuota);
+      data.assumptions = {
+        l3Attainment: (inputs.l3TargetAttainment * 100).toFixed(0) + '%',
+        l2Attainment: (inputs.l2TargetAttainment * 100).toFixed(0) + '%',
+        l3TotalNarr: formatDollars(inputs.l3NarrQuota * inputs.l3TargetAttainment),
+        l2TotalNarr: formatDollars(inputs.l2NarrQuota * inputs.l2TargetAttainment),
+        newLogoPct: (inputs.newLogoPct * 100).toFixed(0) + '%',
+        multiYearPct: (inputs.multiYearPct * 100).toFixed(0) + '%'
+      };
+      var r = calculateDualMeasureAnnualCompensation(inputs);
+      data.projection = {
+        totalVariable: obfuscate ? h : formatDollars(r.totalVariable),
+        otvAttainment: obfuscate ? h : formatPercent(r.otvAttainment),
+        totalComp: obfuscate ? h : formatDollars(salary + r.totalVariable)
+      };
+      data.result = r;
+    } else {
+      data.profile.narrQuota = obfuscate ? h : formatDollars(inputs.narrQuota);
+      var pcr = inputs.narrQuota > 0 ? otv / inputs.narrQuota : 0;
+      data.assumptions = {
+        attainment: (inputs.targetAttainment * 100).toFixed(0) + '%',
+        totalNarr: formatDollars(inputs.narrQuota * inputs.targetAttainment),
+        newLogoPct: (inputs.newLogoPct * 100).toFixed(0) + '%',
+        multiYearPct: (inputs.multiYearPct * 100).toFixed(0) + '%'
+      };
+      var r = calculateAnnualCompensation({
+        narrQuota: inputs.narrQuota,
+        targetAttainment: inputs.targetAttainment,
+        pcr: pcr,
+        newLogoUplift: parseRate(fields.newLogoUplift.value),
+        multiYearUplift: parseRate(fields.multiYearUplift.value),
+        acceleratedPcr: parseRate(fields.acceleratedPcr.value),
+        newLogoPct: inputs.newLogoPct,
+        multiYearPct: inputs.multiYearPct,
+        rarrRate: (isLatamMode() || isRarrMode()) ? parseRate(fields.rarrRate.value) : 0,
+        totalRenewedArr: (isLatamMode() || isRarrMode()) ? inputs.totalRenewedArr : 0
+      });
+      data.projection = {
+        totalVariable: obfuscate ? h : formatDollars(r.totalVariable),
+        otvAttainment: obfuscate ? h : formatPercent(otv > 0 ? r.totalVariable / otv : 0),
+        totalComp: obfuscate ? h : formatDollars(salary + r.totalVariable)
+      };
+      data.result = r;
+    }
+
+    // Sensitivity table data
+    data.sensitivity = buildSensitivityExportRows(inputs, obfuscate);
+
+    return data;
+  }
+
+  function buildSensitivityExportRows(inputs, obfuscate) {
+    const levels = [0.50, 0.75, 1.00, 1.10, 1.20, 1.50];
+    const h = '[hidden]';
+    const salary = inputs.ote * 0.80;
+    const otv = inputs.ote * 0.20;
+    var rows = [];
+
+    for (var i = 0; i < levels.length; i++) {
+      var level = levels[i];
+      var totalVariable, totalNarr;
+      if (inputs.dualMeasure) {
+        var r = calculateDualMeasureAnnualCompensation(Object.assign({}, inputs, {
+          l3TargetAttainment: level, l2TargetAttainment: level
+        }));
+        totalVariable = r.totalVariable;
+        totalNarr = inputs.l3NarrQuota * level + inputs.l2NarrQuota * level;
+      } else {
+        var pcr = inputs.narrQuota > 0 ? otv / inputs.narrQuota : 0;
+        var r = calculateAnnualCompensation({
+          narrQuota: inputs.narrQuota, targetAttainment: level, pcr: pcr,
+          newLogoUplift: parseRate(fields.newLogoUplift.value),
+          multiYearUplift: parseRate(fields.multiYearUplift.value),
+          acceleratedPcr: parseRate(fields.acceleratedPcr.value),
+          newLogoPct: inputs.newLogoPct, multiYearPct: inputs.multiYearPct,
+          rarrRate: (isLatamMode() || isRarrMode()) ? parseRate(fields.rarrRate.value) : 0,
+          totalRenewedArr: (isLatamMode() || isRarrMode()) ? inputs.totalRenewedArr : 0
+        });
+        totalVariable = r.totalVariable;
+        totalNarr = inputs.narrQuota * level;
+      }
+      rows.push({
+        attainment: (level * 100).toFixed(0) + '%',
+        totalNarr: formatDollars(totalNarr),
+        variable: obfuscate ? h : formatDollars(totalVariable),
+        totalComp: obfuscate ? h : formatDollars(salary + totalVariable),
+        otvAtt: obfuscate ? h : formatPercent(otv > 0 ? totalVariable / otv : 0)
+      });
+    }
+    return rows;
+  }
+
+  function formatAnnualPlainText(exportOpts) {
+    var data = getAnnualExportData(exportOpts);
+    var lines = [];
+    lines.push('Pre-Sales Compensation Calculator - Annual Projection');
+    lines.push('Team: ' + data.teamLabel);
+    lines.push('Date: ' + data.date);
+    lines.push('');
+    lines.push('--- User Profile ---');
+    lines.push('OTE: ' + data.profile.ote);
+    lines.push('Salary: ' + data.profile.salary);
+    lines.push('OTV: ' + data.profile.otv);
+    if (data.dualMeasure) {
+      lines.push(data.primaryLabel + ' NARR Quota: ' + data.profile.l3NarrQuota);
+      lines.push(data.secondaryLabel + ' NARR Quota: ' + data.profile.l2NarrQuota);
+    } else {
+      lines.push('NARR Quota: ' + data.profile.narrQuota);
+    }
+    lines.push('');
+    lines.push('--- Assumptions ---');
+    if (data.dualMeasure) {
+      lines.push(data.primaryLabel + ' Target Attainment: ' + data.assumptions.l3Attainment);
+      lines.push(data.primaryLabel + ' Total NARR: ' + data.assumptions.l3TotalNarr);
+      lines.push(data.secondaryLabel + ' Target Attainment: ' + data.assumptions.l2Attainment);
+      lines.push(data.secondaryLabel + ' Total NARR: ' + data.assumptions.l2TotalNarr);
+    } else {
+      lines.push('Target Attainment: ' + data.assumptions.attainment);
+      lines.push('Total NARR: ' + data.assumptions.totalNarr);
+    }
+    lines.push('New Logo Mix: ' + data.assumptions.newLogoPct);
+    lines.push('Multi-Year Mix: ' + data.assumptions.multiYearPct);
+    lines.push('');
+    lines.push('--- Projection ---');
+    lines.push('Variable Compensation: ' + data.projection.totalVariable);
+    lines.push('OTV Attainment: ' + data.projection.otvAttainment);
+    lines.push('Total Annual Compensation: ' + data.projection.totalComp);
+    lines.push('');
+    lines.push('--- Sensitivity ---');
+    lines.push('Attainment\tTotal NARR\tVariable Comp\tTotal Comp\tOTV Attainment');
+    for (var i = 0; i < data.sensitivity.length; i++) {
+      var row = data.sensitivity[i];
+      lines.push(row.attainment + '\t' + row.totalNarr + '\t' + row.variable + '\t' + row.totalComp + '\t' + row.otvAtt);
+    }
+    return lines.join('\n');
+  }
+
+  function buildAnnualPdfHtml(exportOpts) {
+    var data = getAnnualExportData(exportOpts);
+    var profileRows = '';
+    profileRows += buildPdfRow('OTE', data.profile.ote);
+    profileRows += buildPdfRow('Salary', data.profile.salary);
+    profileRows += buildPdfRow('OTV', data.profile.otv);
+    if (data.dualMeasure) {
+      profileRows += buildPdfRow(data.primaryLabel + ' NARR Quota', data.profile.l3NarrQuota);
+      profileRows += buildPdfRow(data.secondaryLabel + ' NARR Quota', data.profile.l2NarrQuota);
+    } else {
+      profileRows += buildPdfRow('NARR Quota', data.profile.narrQuota);
+    }
+
+    var assumptionRows = '';
+    if (data.dualMeasure) {
+      assumptionRows += buildPdfRow(data.primaryLabel + ' Target Attainment', data.assumptions.l3Attainment);
+      assumptionRows += buildPdfRow(data.primaryLabel + ' Total NARR', data.assumptions.l3TotalNarr);
+      assumptionRows += buildPdfRow(data.secondaryLabel + ' Target Attainment', data.assumptions.l2Attainment);
+      assumptionRows += buildPdfRow(data.secondaryLabel + ' Total NARR', data.assumptions.l2TotalNarr);
+    } else {
+      assumptionRows += buildPdfRow('Target Attainment', data.assumptions.attainment);
+      assumptionRows += buildPdfRow('Total NARR', data.assumptions.totalNarr);
+    }
+    assumptionRows += buildPdfRow('New Logo Mix', data.assumptions.newLogoPct);
+    assumptionRows += buildPdfRow('Multi-Year Mix', data.assumptions.multiYearPct);
+
+    var projectionRows = '';
+    projectionRows += buildPdfRow('Variable Compensation', data.projection.totalVariable);
+    projectionRows += buildPdfRow('OTV Attainment', data.projection.otvAttainment);
+    projectionRows += buildPdfRow('Total Annual Compensation', data.projection.totalComp);
+
+    // Sensitivity table
+    var sensHtml = '<table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:10px">';
+    sensHtml += '<tr style="border-bottom:1px solid #2a3368">';
+    sensHtml += '<th style="text-align:left;padding:4px 6px;color:#6070a0;font-size:9px;text-transform:uppercase">Attainment</th>';
+    sensHtml += '<th style="text-align:right;padding:4px 6px;color:#6070a0;font-size:9px;text-transform:uppercase">Total NARR</th>';
+    sensHtml += '<th style="text-align:right;padding:4px 6px;color:#6070a0;font-size:9px;text-transform:uppercase">Variable</th>';
+    sensHtml += '<th style="text-align:right;padding:4px 6px;color:#6070a0;font-size:9px;text-transform:uppercase">Total Comp</th>';
+    sensHtml += '<th style="text-align:right;padding:4px 6px;color:#6070a0;font-size:9px;text-transform:uppercase">OTV Att.</th>';
+    sensHtml += '</tr>';
+    for (var i = 0; i < data.sensitivity.length; i++) {
+      var row = data.sensitivity[i];
+      sensHtml += '<tr style="border-bottom:1px solid rgba(42,51,104,0.3)">';
+      sensHtml += '<td style="padding:3px 6px;color:#a0a8c8">' + row.attainment + '</td>';
+      sensHtml += '<td style="text-align:right;padding:3px 6px;font-family:monospace">' + row.totalNarr + '</td>';
+      sensHtml += '<td style="text-align:right;padding:3px 6px;font-family:monospace">' + row.variable + '</td>';
+      sensHtml += '<td style="text-align:right;padding:3px 6px;font-family:monospace">' + row.totalComp + '</td>';
+      sensHtml += '<td style="text-align:right;padding:3px 6px;font-family:monospace">' + row.otvAtt + '</td>';
+      sensHtml += '</tr>';
+    }
+    sensHtml += '</table>';
+
+    return '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;background:#0c0f24;color:#e8e8f0;padding:30px 40px;font-size:12px;margin:0">'
+      + '<div style="border-bottom:2px solid #751323;padding-bottom:10px;margin-bottom:16px">'
+      + '<div style="font-size:16px;font-weight:700;color:#e8e8f0">Annual Projection</div>'
+      + '<div style="font-size:11px;color:#a0a8c8;margin-top:2px">Team: ' + data.teamLabel + '  |  ' + data.date + '</div>'
+      + '</div>'
+      + buildPdfSection('User Profile', profileRows)
+      + buildPdfSection('Assumptions', assumptionRows)
+      + buildPdfSection('Projection', projectionRows)
+      + buildPdfSection('Sensitivity Analysis', sensHtml)
+      + '<div style="margin-top:20px;padding-top:8px;border-top:1px solid #2a3368;font-size:9px;color:#6070a0;text-align:center">Generated by Pre-Sales Compensation Calculator' + (appVersion ? ' v' + appVersion : '') + '</div>'
+      + '</body></html>';
+  }
 
   // Copy button handler
   btnCopy.addEventListener('click', async function () {
@@ -1585,7 +2166,9 @@
       obfuscate: obfuscateToggle.checked
     };
     let text;
-    if (comparisonMode) {
+    if (annualMode) {
+      text = formatAnnualPlainText(exportOpts);
+    } else if (comparisonMode) {
       text = formatComparisonPlainText(exportOpts);
     } else {
       const inputs = getInputs();
@@ -1615,7 +2198,9 @@
       obfuscate: obfuscateToggle.checked
     };
     let html;
-    if (comparisonMode) {
+    if (annualMode) {
+      html = buildAnnualPdfHtml(exportOpts);
+    } else if (comparisonMode) {
       html = buildComparisonPdfHtml(exportOpts);
     } else {
       const inputs = getInputs();
@@ -1626,7 +2211,7 @@
       html = buildPdfHtml(data, { appVersion: appVersion });
     }
     if (window.pdfExport) {
-      await window.pdfExport.generate(html);
+      await window.pdfExport.generate(html, annualMode ? 'Annual-Projection' : undefined);
     }
   });
 
@@ -1661,6 +2246,81 @@
       tip.style.display = 'none';
     });
   });
+
+  // Mode toggle handler
+  document.querySelectorAll('.mode-tab').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      var mode = this.dataset.mode;
+      if ((mode === 'annual') === annualMode) return;
+
+      annualMode = (mode === 'annual');
+      document.querySelectorAll('.mode-tab').forEach(function (t) {
+        t.classList.toggle('active', t.dataset.mode === mode);
+      });
+      appEl.classList.toggle('annual-mode', annualMode);
+      appEl.classList.toggle('deal-mode', !annualMode);
+
+      // Exit comparison mode when switching to annual
+      if (annualMode && comparisonMode) {
+        btnCompare.click();
+      }
+
+      // Show/hide RARR field for annual mode
+      if (annualMode && (isLatamMode() || isRarrMode())) {
+        annualRenewedArrField.classList.remove('field-hidden');
+      } else {
+        annualRenewedArrField.classList.add('field-hidden');
+      }
+
+      // Disable multi-year slider if team disables it
+      if (annualMode && multiYearDisabled) {
+        annualMyPctField.classList.add('field-disabled');
+        annualMyPctSlider.disabled = true;
+        annualMyPctInput.disabled = true;
+        annualMyPctSlider.value = 0;
+        annualMyPctInput.value = '0';
+      }
+
+      // Update results title
+      document.querySelector('.results-title').textContent = annualMode ? 'Annual Projection' : 'Commission Breakdown';
+
+      recalculate();
+    });
+  });
+
+  // Annual slider bindings
+  var annualSliderPairs = [
+    [annualAttainmentSlider, annualAttainmentInput],
+    [annualL3AttainmentSlider, annualL3AttainmentInput],
+    [annualL2AttainmentSlider, annualL2AttainmentInput],
+    [annualNlPctSlider, annualNlPctInput],
+    [annualMyPctSlider, annualMyPctInput]
+  ];
+
+  annualSliderPairs.forEach(function (pair) {
+    var slider = pair[0];
+    var input = pair[1];
+    if (!slider || !input) return;
+    slider.addEventListener('input', function () {
+      input.value = slider.value;
+      if (annualMode) recalculate();
+    });
+    input.addEventListener('input', function () {
+      var val = parseFloat(input.value) || 0;
+      slider.value = Math.max(parseFloat(slider.min), Math.min(parseFloat(slider.max), val));
+      if (annualMode) recalculate();
+    });
+    input.addEventListener('change', function () {
+      if (annualMode && settingsLoaded) saveSettings();
+    });
+  });
+
+  // Annual renewed ARR recalculate on input (currency formatting handled by [data-currency] loop)
+  if (annualRenewedArr) {
+    annualRenewedArr.addEventListener('input', function () {
+      if (annualMode) recalculate();
+    });
+  }
 
   loadSettings();
 })();

@@ -6,5 +6,5 @@ contextBridge.exposeInMainWorld('appSettings', {
 });
 
 contextBridge.exposeInMainWorld('pdfExport', {
-  generate: (htmlString) => ipcRenderer.invoke('pdf:generate', htmlString)
+  generate: (htmlString, filenamePrefix) => ipcRenderer.invoke('pdf:generate', htmlString, filenamePrefix)
 });

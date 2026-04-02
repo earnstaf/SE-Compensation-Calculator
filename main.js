@@ -25,7 +25,7 @@ async function initStore() {
   });
 }
 
-const ALLOWED_SETTINGS = new Set(['team', 'ote', 'narrQuota', 'narrQuotaCredit', 'l3NarrQuota', 'l2NarrQuota', 'l3NarrQuotaCredit', 'l2NarrQuotaCredit']);
+const ALLOWED_SETTINGS = new Set(['team', 'ote', 'narrQuota', 'narrQuotaCredit', 'l3NarrQuota', 'l2NarrQuota', 'l3NarrQuotaCredit', 'l2NarrQuotaCredit', 'targetAttainment', 'newLogoPct', 'multiYearPct', 'totalRenewedArr', 'l3TargetAttainment', 'l2TargetAttainment']);
 
 ipcMain.handle('settings:load', () => {
   const data = store ? Object.assign({}, store.store) : {};
@@ -41,7 +41,7 @@ ipcMain.handle('settings:save', (_event, data) => {
   }
 });
 
-ipcMain.handle('pdf:generate', async (_event, htmlString) => {
+ipcMain.handle('pdf:generate', async (_event, htmlString, filenamePrefix) => {
   const pdfWin = new BrowserWindow({
     width: 800,
     height: 1100,
@@ -65,9 +65,10 @@ ipcMain.handle('pdf:generate', async (_event, htmlString) => {
     });
 
     const dateStr = new Date().toISOString().slice(0, 10);
+    const prefix = filenamePrefix || 'Commission-Breakdown';
     const { canceled, filePath } = await dialog.showSaveDialog({
-      title: 'Export Commission Breakdown',
-      defaultPath: path.join(app.getPath('downloads'), 'Commission-Breakdown-' + dateStr + '.pdf'),
+      title: 'Export PDF',
+      defaultPath: path.join(app.getPath('downloads'), prefix + '-' + dateStr + '.pdf'),
       filters: [{ name: 'PDF', extensions: ['pdf'] }]
     });
 

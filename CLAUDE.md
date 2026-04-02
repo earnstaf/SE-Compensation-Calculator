@@ -358,48 +358,52 @@ L2 PCR = (40000 * 0.20) / 67680000 = ~0.0118%.
 For an L3 deal with no uplifts: commission = (deal_narr * L3 PCR) + (deal_narr * L2 PCR).
 Both measures pay out independently based on their own attainment levels.
 
-## Phase 2: Annual Calculator
+## Annual Projections Calculator
 
-DO NOT implement in the deal-level calculator. Recorded for future reference.
+Tab-based mode toggle between "Deal Calculator" (default) and "Annual Projections." User Profile and Uplift Rates are shared between both modes.
 
-### Regional Quota Splits (M1/M2)
+### Annual Inputs
+- Target NARR Attainment: slider (0-200%) + text input, default 100%
+- Deal Mix: New Logo % (default 30%), Multi-Year % (default 20%) — can overlap
+- Total Renewed ARR: shown only for LATAM/PSA-MSP teams (for RARR bonus)
+- For dual-measure teams: two attainment sliders (one per measure)
+- Auto-calculated Total NARR = Quota × Attainment
 
-Certain teams operate on a dual-measure quota structure where OTV is split across two geographic levels (Region vs. Geo). Each measure has its own uplift rates and accelerator values.
+### Annual Calculation Logic (calc-engine.js)
+`calculateAnnualCompensation(inputs)` — splits total NARR into 4 buckets using overlap formula:
+- Plain NARR (neither NL nor MY): rate = PCR
+- NL-only NARR: rate = PCR + NL Uplift
+- MY-only NARR: rate = PCR + MY Uplift
+- Both NL+MY NARR: rate = PCR + NL Uplift + MY Uplift
+- Overlap = max(0, newLogoPct + multiYearPct - 1)
 
-#### Teams with M1/M2 Split:
+Each bucket splits at 100% attainment threshold: below at base rate, above at accelerated rate. Proportional distribution across buckets.
 
-| Team | M1 Weight | M1 Level | M2 Weight | M2 Level |
-|------|-----------|----------|-----------|----------|
-| US & Canada (excl Fed) | 80% | L3 NARR | 20% | L2 NARR |
-| EMEA | 80% | L3 NARR | 20% | L2 NARR |
-| ISE - EMEA | 80% | L3 NARR | 20% | L2 NARR |
+`calculateDualMeasureAnnualCompensation(inputs)` — derives PCRs, calls `calculateAnnualCompensation()` twice (per measure), sums results. RARR bonus added at outer level.
 
-#### M1 vs. M2 Uplift Rates:
+### Sensitivity Table
+Pre-computed at [50, 75, 100, 110, 120, 150]% attainment. Highlighted row = closest to user's target. For dual-measure: uses same attainment for both measures per row.
 
-| Team | M1 NL | M1 MY | M1 Accelerated | M2 NL | M2 MY | M2 Accelerated |
-|------|-------|-------|----------------|-------|-------|----------------|
-| US & Canada (excl Fed) | 0.045% | 0.045% | 0.20% | 0.005% | 0.005% | 0.05% |
-| EMEA | 0.045% | 0.045% | 0.20% | 0.005% | 0.005% | 0.05% |
-| ISE - EMEA | 0.0225% | 0.0225% | 0.0725% | 0.0025% | 0.0025% | 0.0025% |
+### Attainment Progress Bar
+Visual bar mapping 0-200% to track width, markers at 50/75/100/125/150%. 100% marker visually emphasized (accelerator threshold).
 
-All other teams use a single measure (100% of OTV against one NARR target).
+### Mode Toggle Behavior
+- Switching to Annual exits comparison mode if active
+- Deal Details section hidden in annual mode; Annual Inputs section hidden in deal mode
+- Scenario presets and Compare Deals button hidden in annual mode
+- Results title changes: "Annual Projection" vs "Commission Breakdown"
+- Reset button exits annual mode and resets annual fields to defaults
 
-### LaTam Special Case
+### Annual Export
+- Copy/PDF include: User Profile, Assumptions (attainment, deal mix), Projection (variable, OTV attainment, total comp), Sensitivity table
+- PDF filename: `Annual-Projection-YYYY-MM-DD.pdf`
+- "Hide Sensitive Data" redacts same fields as deal mode plus Variable Comp and Total Comp
 
-LATAM uses 100% L4 ARR (not NARR) as its quota measure. The RARR bonus commission (0.10% on Renewed ARR) is implemented in the deal-level calculator. For the annual calculator, the quota basis difference (ARR vs. NARR) will need dedicated handling.
+### Persisted Annual Settings
+Keys added to ALLOWED_SETTINGS: `targetAttainment`, `newLogoPct`, `multiYearPct`, `totalRenewedArr`, `l3TargetAttainment`, `l2TargetAttainment`
 
-### Annual Calculator Design Implications
-
-- User selects team, which determines whether M1/M2 split applies.
-- If split applies, OTV is divided (e.g., 80/20) across two measures, each with its own uplift rates and accelerator.
-- Attainment and overachievement are calculated independently per measure.
-- Total annual commission = sum of commissions across all measures.
-- The deal-level calculator remains unchanged; it always operates on a single deal against a single rate structure.
-
-### PSA Quota Splits
-
-PSA-GSI & SPA and PSA-Hybrid use a 70/30 quota split and are now implemented as dual-measure teams in the deal-level calculator. PSA-MSP uses 100% Global MSP ARR (single measure) with RARR bonus commission at 0.05%.
-
-### GEE-VE Quota
-
-GEE-VE uses 100% NARR based on Geo/Segment mapping. Single measure, no split. Same structure as SE Team 1 for annual calculation purposes.
+### Test Cases
+- Single-measure at 100% attainment: Variable comp should equal OTV (at PCR only, no uplifts, 0% deal mix)
+- Single-measure at 120%: Above-100% buckets appear with accelerated rates
+- Deal mix overlap: NL 60% + MY 60% → 20% overlap bucket with both uplifts
+- Dual-measure asymmetric: L3 at 120%, L2 at 80% — each evaluates independently

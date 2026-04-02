@@ -222,3 +222,159 @@ function calculateCompensation(inputs) {
     rarrMode: inputs.rarrMode || false
   };
 }
+
+function calculateAnnualCompensation(inputs) {
+  const {
+    narrQuota,
+    targetAttainment,
+    pcr,
+    newLogoUplift,
+    multiYearUplift,
+    acceleratedPcr,
+    newLogoPct,
+    multiYearPct,
+    rarrRate = 0,
+    totalRenewedArr = 0
+  } = inputs;
+
+  const totalNarr = narrQuota * targetAttainment;
+
+  // Split NARR into 4 buckets using inclusion-exclusion for overlap
+  const overlap = Math.max(0, newLogoPct + multiYearPct - 1);
+  const nlOnlyPct = newLogoPct - overlap;
+  const myOnlyPct = multiYearPct - overlap;
+  const bothPct = overlap;
+  const plainPct = Math.max(0, 1 - newLogoPct - multiYearPct + overlap);
+
+  // Commission rates per bucket
+  const rates = [
+    { label: 'Plain NARR', pct: plainPct, baseRate: pcr, accelRate: pcr + acceleratedPcr },
+    { label: 'New Logo NARR', pct: nlOnlyPct, baseRate: pcr + newLogoUplift, accelRate: pcr + newLogoUplift + acceleratedPcr },
+    { label: 'Multi-Year NARR', pct: myOnlyPct, baseRate: pcr + multiYearUplift, accelRate: pcr + multiYearUplift + acceleratedPcr },
+    { label: 'New Logo + Multi-Year NARR', pct: bothPct, baseRate: pcr + newLogoUplift + multiYearUplift, accelRate: pcr + newLogoUplift + multiYearUplift + acceleratedPcr }
+  ];
+
+  // Split at 100% attainment threshold
+  const narrBelow = Math.min(totalNarr, narrQuota);
+  const narrAbove = Math.max(0, totalNarr - narrQuota);
+
+  let commissionBelow = 0;
+  let commissionAbove = 0;
+  const breakdown = [];
+
+  for (const bucket of rates) {
+    if (bucket.pct <= 0) continue;
+    const bucketNarrBelow = narrBelow * bucket.pct;
+    const bucketNarrAbove = narrAbove * bucket.pct;
+    const bucketCommBelow = bucketNarrBelow * bucket.baseRate;
+    const bucketCommAbove = bucketNarrAbove * bucket.accelRate;
+    commissionBelow += bucketCommBelow;
+    commissionAbove += bucketCommAbove;
+    breakdown.push({
+      label: bucket.label,
+      pct: bucket.pct,
+      narrBelow: bucketNarrBelow,
+      narrAbove: bucketNarrAbove,
+      baseRate: bucket.baseRate,
+      accelRate: bucket.accelRate,
+      commissionBelow: bucketCommBelow,
+      commissionAbove: bucketCommAbove,
+      totalCommission: bucketCommBelow + bucketCommAbove
+    });
+  }
+
+  const narrCommission = commissionBelow + commissionAbove;
+
+  let rarrCommission = 0;
+  if (rarrRate > 0 && totalRenewedArr > 0) {
+    rarrCommission = totalRenewedArr * rarrRate;
+  }
+
+  const totalVariable = narrCommission + rarrCommission;
+
+  return {
+    totalNarr,
+    totalVariable,
+    commissionBelow,
+    commissionAbove,
+    narrCommission,
+    rarrCommission,
+    narrBelow,
+    narrAbove,
+    breakdown,
+    targetAttainment
+  };
+}
+
+function calculateDualMeasureAnnualCompensation(inputs) {
+  const {
+    ote,
+    l3NarrQuota,
+    l2NarrQuota,
+    l3TargetAttainment,
+    l2TargetAttainment,
+    l3NewLogoUplift,
+    l3MultiYearUplift,
+    l3AcceleratedPcr,
+    l2NewLogoUplift,
+    l2MultiYearUplift,
+    l2AcceleratedPcr,
+    newLogoPct,
+    multiYearPct,
+    primarySplit = 0.80,
+    secondarySplit = 0.20,
+    rarrRate = 0,
+    totalRenewedArr = 0
+  } = inputs;
+
+  const salary = ote * 0.80;
+  const otv = ote * 0.20;
+  const l3Pcr = l3NarrQuota > 0 ? (otv * primarySplit) / l3NarrQuota : 0;
+  const l2Pcr = l2NarrQuota > 0 ? (otv * secondarySplit) / l2NarrQuota : 0;
+
+  const l3 = calculateAnnualCompensation({
+    narrQuota: l3NarrQuota,
+    targetAttainment: l3TargetAttainment,
+    pcr: l3Pcr,
+    newLogoUplift: l3NewLogoUplift,
+    multiYearUplift: l3MultiYearUplift,
+    acceleratedPcr: l3AcceleratedPcr,
+    newLogoPct,
+    multiYearPct,
+    rarrRate: 0,
+    totalRenewedArr: 0
+  });
+
+  const l2 = calculateAnnualCompensation({
+    narrQuota: l2NarrQuota,
+    targetAttainment: l2TargetAttainment,
+    pcr: l2Pcr,
+    newLogoUplift: l2NewLogoUplift,
+    multiYearUplift: l2MultiYearUplift,
+    acceleratedPcr: l2AcceleratedPcr,
+    newLogoPct,
+    multiYearPct,
+    rarrRate: 0,
+    totalRenewedArr: 0
+  });
+
+  let rarrCommission = 0;
+  if (rarrRate > 0 && totalRenewedArr > 0) {
+    rarrCommission = totalRenewedArr * rarrRate;
+  }
+
+  const totalVariable = l3.totalVariable + l2.totalVariable + rarrCommission;
+  const otvAttainment = otv > 0 ? totalVariable / otv : 0;
+
+  return {
+    salary,
+    otv,
+    l3Pcr,
+    l2Pcr,
+    l3,
+    l2,
+    totalVariable,
+    otvAttainment,
+    rarrCommission
+  };
+}

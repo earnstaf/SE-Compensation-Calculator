@@ -42,7 +42,7 @@ body {
 .app {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto auto 1fr;
   height: 100vh;
   gap: 0;
 }
@@ -773,6 +773,226 @@ select option {
 
 .result-value.delta-even {
   color: var(--text-muted);
+}
+
+/* Mode tabs */
+.mode-tabs {
+  grid-column: 1 / -1;
+  display: flex;
+  padding: 0 24px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  gap: 0;
+}
+
+.mode-tab {
+  padding: 10px 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.02em;
+}
+
+.mode-tab:hover {
+  color: var(--text-secondary);
+}
+
+.mode-tab.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--accent);
+}
+
+/* Mode visibility */
+.app.deal-mode .annual-mode-only {
+  display: none !important;
+}
+
+.app.annual-mode .deal-mode-only {
+  display: none !important;
+}
+
+/* Slider input rows */
+.slider-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.slider-input-row input[type="range"] {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.slider-input-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--text-primary);
+  cursor: pointer;
+}
+
+.slider-text-input {
+  width: 70px;
+  flex-shrink: 0;
+}
+
+/* Attainment progress bar */
+.attainment-bar {
+  margin: 8px 0 4px;
+}
+
+.attainment-bar-track {
+  position: relative;
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  margin: 20px 0 24px;
+}
+
+.attainment-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+  transition: width 0.3s;
+  max-width: 100%;
+}
+
+.attainment-marker {
+  position: absolute;
+  top: -16px;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.attainment-marker::after {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 12px;
+  background: var(--text-muted);
+  opacity: 0.4;
+}
+
+.attainment-marker.marker-100 {
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.attainment-marker.marker-100::after {
+  opacity: 0.8;
+  background: var(--text-secondary);
+}
+
+.attainment-indicator {
+  position: absolute;
+  top: 12px;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 6px solid var(--accent);
+  transition: left 0.3s;
+}
+
+/* Sensitivity table */
+.sensitivity-table-wrap {
+  margin-top: 16px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.sensitivity-table-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.sensitivity-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sensitivity-table th {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: right;
+}
+
+.sensitivity-table th:first-child {
+  text-align: left;
+}
+
+.sensitivity-table td {
+  padding: 5px 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-primary);
+  border-bottom: 1px solid rgba(42, 51, 104, 0.3);
+  text-align: right;
+}
+
+.sensitivity-table td:first-child {
+  text-align: left;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-weight: 600;
+}
+
+.sensitivity-table tr.sensitivity-active {
+  background: rgba(117, 19, 35, 0.2);
+}
+
+.sensitivity-table tr.sensitivity-active td {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Annual results summary highlight */
+.annual-total-row {
+  background: rgba(117, 19, 35, 0.15);
+  margin: 0 -8px;
+  padding: 10px 8px;
+  border-radius: var(--radius);
+  border-bottom: none;
+}
+
+.annual-total-row .result-label {
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.annual-total-row .result-value {
+  font-size: 16px;
+  color: var(--green);
 }
 
 /* Scrollbar */
