@@ -812,8 +812,13 @@ select option {
   display: none !important;
 }
 
-.app.annual-mode .deal-mode-only {
+.app.annual-mode .deal-mode-only,
+.app.annual-mode .deal-mode-field {
   display: none !important;
+}
+
+.app.annual-mode .dm-quota-row {
+  grid-template-columns: 1fr;
 }
 
 /* Slider input rows */
