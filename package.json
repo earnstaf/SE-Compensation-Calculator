@@ -20,16 +20,27 @@
     "compression": "maximum",
     "files": [
       "main.js",
+      "preload.js",
       "index.html",
       "css/**/*",
       "js/**/*"
     ],
+    "publish": {
+      "provider": "github",
+      "owner": "earnstaf",
+      "repo": "SE-Compensation-Calculator"
+    },
     "win": {
-      "target": "portable",
+      "target": "nsis",
       "icon": "assets/icon.png"
     },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false
+    },
     "mac": {
-      "target": "dmg",
+      "target": ["dmg", "zip"],
       "icon": "assets/icon.png"
     }
   },
@@ -37,5 +48,9 @@
     "electron": "^33.0.0",
     "electron-builder": "^25.0.0",
     "serve": "^14.2.6"
+  },
+  "dependencies": {
+    "electron-store": "^11.0.2",
+    "electron-updater": "^6.8.3"
   }
 }

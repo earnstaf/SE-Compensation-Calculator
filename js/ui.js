@@ -32,6 +32,34 @@
 
   let currentTeam = 'custom';
   let multiYearDisabled = false;
+  let settingsLoaded = false;
+
+  function saveSettings() {
+    if (!settingsLoaded || !window.appSettings) return;
+    window.appSettings.save({
+      team: currentTeam,
+      ote: fields.ote.value,
+      narrQuota: fields.narrQuota.value,
+      narrQuotaCredit: fields.narrQuotaCredit.value
+    });
+  }
+
+  async function loadSettings() {
+    if (!window.appSettings) { settingsLoaded = true; return; }
+    try {
+      const s = await window.appSettings.load();
+      if (s.team && s.team !== 'custom') {
+        applyTeamPreset(s.team);
+      }
+      if (s.ote) { fields.ote.value = s.ote; }
+      if (s.narrQuota) { fields.narrQuota.value = s.narrQuota; }
+      if (s.narrQuotaCredit) { fields.narrQuotaCredit.value = s.narrQuotaCredit; }
+      settingsLoaded = true;
+      recalculate();
+    } catch (e) {
+      settingsLoaded = true;
+    }
+  }
 
   const newLogoUpliftTooltip = fields.newLogoUplift.closest('.field').querySelector('.tooltip-content');
   const defaultNlTooltip = 'Additive modifier applied when the deal is a new logo (no existing contract). Only applies when New Logo toggle is on.';
@@ -302,9 +330,14 @@
     </div>`;
   }
 
+  const persistedFields = new Set([fields.ote, fields.narrQuota, fields.narrQuotaCredit]);
+
   // Event: currency fields
   document.querySelectorAll('[data-currency]').forEach(input => {
-    input.addEventListener('input', handleCurrencyInput);
+    input.addEventListener('input', function (e) {
+      handleCurrencyInput(e);
+      if (persistedFields.has(this)) saveSettings();
+    });
     input.addEventListener('focus', function () {
       const val = parseCurrency(this.value);
       if (val === 0 && this.value === '0') {
@@ -318,16 +351,21 @@
     input.addEventListener('input', function () {
       checkTeamModified();
       recalculate();
+      saveSettings();
     });
   });
 
   // Event: OTE
-  fields.ote.addEventListener('input', handleCurrencyInput);
+  fields.ote.addEventListener('input', function (e) {
+    handleCurrencyInput(e);
+    saveSettings();
+  });
 
   // Event: team selector
   teamSelect.addEventListener('change', function () {
     applyTeamPreset(this.value);
     recalculate();
+    saveSettings();
   });
 
   // Toggle helper
@@ -451,5 +489,5 @@
     });
   });
 
-  recalculate();
+  loadSettings();
 })();
