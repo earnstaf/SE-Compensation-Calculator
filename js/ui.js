@@ -821,11 +821,11 @@
     } else {
       data.results.preDealAttainment = formatPercent(results.narrQuotaAttainment);
       data.results.postDealAttainment = formatPercent(results.postDealAttainment);
-      data.results.baseRate = formatRateAsPercent(results.baseRate);
+      data.results.baseRate = obfuscate ? '[hidden]' : formatRateAsPercent(results.baseRate);
       data.results.baseRateLabel = buildRateLabel(results, inputs);
       data.results.straddlesThreshold = results.straddlesThreshold;
       if (results.straddlesThreshold) {
-        data.results.acceleratedRate = formatRateAsPercent(results.acceleratedRate);
+        data.results.acceleratedRate = obfuscate ? '[hidden]' : formatRateAsPercent(results.acceleratedRate);
         data.results.narrBelow = formatDollars(results.narrBelow);
         data.results.commissionBelow = formatDollars(results.commissionBelow);
         data.results.narrAbove = formatDollars(results.narrAbove);
@@ -847,14 +847,14 @@
       label: label,
       preDealAttainment: formatPercent(measure.narrQuotaAttainment),
       postDealAttainment: formatPercent(measure.postDealAttainment),
-      baseRate: formatRateAsPercent(measure.baseRate),
+      baseRate: obfuscate ? '[hidden]' : formatRateAsPercent(measure.baseRate),
       baseRateLabel: rateLabel,
       pcr: obfuscate ? '[hidden]' : formatRateAsPercent(measure.pcr),
       commission: formatDollars(measure.commission),
       straddlesThreshold: measure.straddlesThreshold
     };
     if (measure.straddlesThreshold) {
-      d.acceleratedRate = formatRateAsPercent(measure.acceleratedRate);
+      d.acceleratedRate = obfuscate ? '[hidden]' : formatRateAsPercent(measure.acceleratedRate);
       d.narrBelow = formatDollars(measure.narrBelow);
       d.commissionBelow = formatDollars(measure.commissionBelow);
       d.narrAbove = formatDollars(measure.narrAbove);
