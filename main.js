@@ -12,12 +12,16 @@ async function initStore() {
       team: 'custom',
       ote: '',
       narrQuota: '',
-      narrQuotaCredit: ''
+      narrQuotaCredit: '',
+      l3NarrQuota: '',
+      l2NarrQuota: '',
+      l3NarrQuotaCredit: '',
+      l2NarrQuotaCredit: ''
     }
   });
 }
 
-const ALLOWED_SETTINGS = new Set(['team', 'ote', 'narrQuota', 'narrQuotaCredit']);
+const ALLOWED_SETTINGS = new Set(['team', 'ote', 'narrQuota', 'narrQuotaCredit', 'l3NarrQuota', 'l2NarrQuota', 'l3NarrQuotaCredit', 'l2NarrQuotaCredit']);
 
 ipcMain.handle('settings:load', () => store ? store.store : {});
 ipcMain.handle('settings:save', (_event, data) => {

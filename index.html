@@ -83,7 +83,23 @@
               <input type="text" id="otv" class="has-prefix computed" readonly tabindex="-1">
             </div>
           </div>
-          <div class="field">
+
+          <!-- Dual-Measure Toggle (visible only for Custom team) -->
+          <div class="field field-hidden" id="dual-measure-toggle-field">
+            <label class="field-label">
+              Dual-Measure (L3/L2)
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">Enable dual-measure mode. OTV is split 80/20 across L3 (regional) and L2 (geo) quotas, each with independent PCR and uplift rates.</span>
+              </span>
+            </label>
+            <div class="toggle-field">
+              <div class="toggle" id="dual-measure-toggle" role="switch" aria-checked="false" tabindex="0"></div>
+              <span class="toggle-label" id="dual-measure-label">Off</span>
+            </div>
+          </div>
+
+          <!-- Single-measure fields (shown when dual-measure is off) -->
+          <div class="field single-measure-only" id="narr-quota-field">
             <label class="field-label">
               NARR Quota
               <span class="tooltip-trigger">&#9432;
@@ -95,7 +111,7 @@
               <input type="text" id="narr-quota" class="has-prefix" data-currency>
             </div>
           </div>
-          <div class="field">
+          <div class="field single-measure-only" id="pcr-field">
             <label class="field-label">
               PCR
               <span class="tooltip-trigger">&#9432;
@@ -106,7 +122,7 @@
               <input type="text" id="pcr" class="computed" readonly tabindex="-1">
             </div>
           </div>
-          <div class="field">
+          <div class="field single-measure-only" id="narr-quota-credit-field">
             <label class="field-label">
               NARR Quota Credit
               <span class="tooltip-trigger">&#9432;
@@ -118,7 +134,7 @@
               <input type="text" id="narr-quota-credit" class="has-prefix" data-currency>
             </div>
           </div>
-          <div class="field">
+          <div class="field single-measure-only" id="narr-attainment-field">
             <label class="field-label">
               NARR Quota Attainment
               <span class="tooltip-trigger">&#9432;
@@ -130,6 +146,90 @@
               <span class="input-suffix">%</span>
             </div>
           </div>
+
+          <!-- Dual-measure fields (shown when dual-measure is on) -->
+          <div class="field dual-measure-only field-full" id="dm-l3-row">
+            <div class="dm-quota-row">
+              <div class="dm-quota-cell">
+                <label class="field-label">
+                  L3 NARR Quota
+                  <span class="tooltip-trigger">&#9432;
+                    <span class="tooltip-content">Regional-level NARR quota target. L3 PCR = (OTV × 80%) / L3 NARR Quota.</span>
+                  </span>
+                </label>
+                <div class="input-wrap">
+                  <span class="input-prefix">$</span>
+                  <input type="text" id="l3-narr-quota" class="has-prefix" data-currency>
+                </div>
+              </div>
+              <div class="dm-quota-cell">
+                <label class="field-label">
+                  L3 Quota Credit
+                  <span class="tooltip-trigger">&#9432;
+                    <span class="tooltip-content">Cumulative NARR retired YTD within your L3 region, before this deal.</span>
+                  </span>
+                </label>
+                <div class="input-wrap">
+                  <span class="input-prefix">$</span>
+                  <input type="text" id="l3-narr-quota-credit" class="has-prefix" data-currency>
+                </div>
+              </div>
+              <div class="dm-quota-cell">
+                <label class="field-label">L3 Attainment</label>
+                <div class="input-wrap">
+                  <input type="text" id="l3-attainment" class="computed has-suffix" readonly tabindex="-1">
+                  <span class="input-suffix">%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="field dual-measure-only field-full" id="dm-l2-row">
+            <div class="dm-quota-row">
+              <div class="dm-quota-cell">
+                <label class="field-label">
+                  L2 NARR Quota
+                  <span class="tooltip-trigger">&#9432;
+                    <span class="tooltip-content">Geo-level NARR quota target. L2 PCR = (OTV × 20%) / L2 NARR Quota.</span>
+                  </span>
+                </label>
+                <div class="input-wrap">
+                  <span class="input-prefix">$</span>
+                  <input type="text" id="l2-narr-quota" class="has-prefix" data-currency>
+                </div>
+              </div>
+              <div class="dm-quota-cell">
+                <label class="field-label">
+                  L2 Quota Credit
+                  <span class="tooltip-trigger">&#9432;
+                    <span class="tooltip-content">Cumulative NARR retired YTD at the geo level, before this deal.</span>
+                  </span>
+                </label>
+                <div class="input-wrap">
+                  <span class="input-prefix">$</span>
+                  <input type="text" id="l2-narr-quota-credit" class="has-prefix" data-currency>
+                </div>
+              </div>
+              <div class="dm-quota-cell">
+                <label class="field-label">L2 Attainment</label>
+                <div class="input-wrap">
+                  <input type="text" id="l2-attainment" class="computed has-suffix" readonly tabindex="-1">
+                  <span class="input-suffix">%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="field dual-measure-only">
+            <label class="field-label">L3 PCR</label>
+            <div class="input-wrap">
+              <input type="text" id="l3-pcr" class="computed" readonly tabindex="-1">
+            </div>
+          </div>
+          <div class="field dual-measure-only">
+            <label class="field-label">L2 PCR</label>
+            <div class="input-wrap">
+              <input type="text" id="l2-pcr" class="computed" readonly tabindex="-1">
+            </div>
+          </div>
         </div>
       </div>
 
@@ -137,7 +237,9 @@
       <div class="section">
         <div class="section-title">Uplift Rates</div>
         <div class="psa-pending-note field-hidden" id="psa-pending-note">Uplift values for this team are pending. Enter values manually.</div>
-        <div class="field-grid">
+
+        <!-- Single-measure uplift layout -->
+        <div class="field-grid single-measure-only" id="uplift-single">
           <div class="field">
             <label class="field-label">
               New Logo Uplift
@@ -180,6 +282,73 @@
             </label>
             <div class="input-wrap">
               <input type="text" id="rarr-rate" value="0.001">
+            </div>
+          </div>
+        </div>
+
+        <!-- Dual-measure uplift layout -->
+        <div class="dm-uplift-grid dual-measure-only" id="uplift-dual">
+          <div class="dm-uplift-header">
+            <div class="dm-uplift-label"></div>
+            <div class="dm-uplift-col-header">L3</div>
+            <div class="dm-uplift-col-header">L2</div>
+          </div>
+          <div class="dm-uplift-row">
+            <div class="dm-uplift-label">
+              <label class="field-label">
+                New Logo Uplift
+                <span class="tooltip-trigger">&#9432;
+                  <span class="tooltip-content">Additive modifier applied when the deal is a new logo. L3 and L2 have independent uplift values.</span>
+                </span>
+              </label>
+            </div>
+            <div class="dm-uplift-cell">
+              <div class="input-wrap">
+                <input type="text" id="l3-new-logo-uplift" value="0.00045">
+              </div>
+            </div>
+            <div class="dm-uplift-cell">
+              <div class="input-wrap">
+                <input type="text" id="l2-new-logo-uplift" value="0.00005">
+              </div>
+            </div>
+          </div>
+          <div class="dm-uplift-row" id="dm-multi-year-row">
+            <div class="dm-uplift-label">
+              <label class="field-label">
+                Multi-Year Uplift
+                <span class="tooltip-trigger">&#9432;
+                  <span class="tooltip-content">Additive modifier applied for multi-year contracts. L3 and L2 have independent uplift values.</span>
+                </span>
+              </label>
+            </div>
+            <div class="dm-uplift-cell">
+              <div class="input-wrap">
+                <input type="text" id="l3-multi-year-uplift" value="0.00045">
+              </div>
+            </div>
+            <div class="dm-uplift-cell">
+              <div class="input-wrap">
+                <input type="text" id="l2-multi-year-uplift" value="0.00005">
+              </div>
+            </div>
+          </div>
+          <div class="dm-uplift-row">
+            <div class="dm-uplift-label">
+              <label class="field-label">
+                Accelerated PCR
+                <span class="tooltip-trigger">&#9432;
+                  <span class="tooltip-content">Additive modifier applied only to NARR above 100% attainment. Shared across both measures.</span>
+                </span>
+              </label>
+            </div>
+            <div class="dm-uplift-cell">
+              <div class="input-wrap">
+                <input type="text" id="dm-accelerated-pcr" value="0.002">
+              </div>
+            </div>
+            <div class="dm-uplift-cell dm-uplift-shared">
+              <span class="text-muted">(shared)</span>
             </div>
           </div>
         </div>
@@ -259,6 +428,18 @@
             <div class="toggle-field">
               <div class="toggle" id="multi-year-toggle" role="switch" aria-checked="false" tabindex="0"></div>
               <span class="toggle-label" id="multi-year-label">No</span>
+            </div>
+          </div>
+          <div class="field dual-measure-only" id="l3-region-field">
+            <label class="field-label">
+              Deal is within my L3 region
+              <span class="tooltip-trigger">&#9432;
+                <span class="tooltip-content">When on, this deal earns commission on both L3 and L2 measures (L3 rolls up to L2). When off, commission is earned on L2 only.</span>
+              </span>
+            </label>
+            <div class="toggle-field">
+              <div class="toggle active" id="l3-region-toggle" role="switch" aria-checked="true" tabindex="0"></div>
+              <span class="toggle-label" id="l3-region-label">Yes</span>
             </div>
           </div>
         </div>

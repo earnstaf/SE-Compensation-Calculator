@@ -6,23 +6,56 @@ Cross-platform Electron desktop app that calculates a Pre-Sales professional's c
 
 - Electron (cross-platform: .exe for Windows, .dmg for macOS)
 - Vanilla HTML/CSS/JS (no framework)
-- No backend, no database, no auth, no network
+- No backend, no database, no auth
 - Packaged via Electron Builder
+- Auto-updates via electron-updater (GitHub Releases as update source)
+- Settings persistence via electron-store (Team, OTE, NARR Quota, NARR Quota Credit, L3/L2 Quota fields)
 
 ## Project Structure
 
 ```
 se-comp-calc/
-  main.js              # Electron main process
+  main.js              # Electron main process (window, auto-updater, settings IPC)
+  preload.js           # Context bridge for settings IPC (load/save)
   index.html           # App shell
   css/
-    styles.css         # Layout, theme, typography
+    styles.css         # Layout, theme (crimson/navy/grey), typography
   js/
-    calc-engine.js     # Compensation logic (standalone, testable)
-    ui.js              # Reactive input binding, results rendering
-    scenarios.js       # Preset scenario definitions + team presets
+    calc-engine.js     # Compensation logic (standalone, testable, no DOM)
+    ui.js              # Reactive input binding, results rendering, tooltip positioning
+    scenarios.js       # Preset scenario definitions + team presets (TEAM_PRESETS, SCENARIOS)
+  assets/
+    icon.png           # App icon
+  .github/
+    workflows/
+      build.yml        # GitHub Actions: builds win (.exe) + mac (.dmg/.zip) on tag push
   package.json
 ```
+
+## Architecture
+
+### Security Model
+
+- `nodeIntegration: false`, `contextIsolation: true`, `sandbox: true`
+- `webSecurity: true`, `allowRunningInsecureContent: false`
+- Preload script exposes only `appSettings.load()` and `appSettings.save()` via contextBridge
+- IPC settings handler whitelists allowed keys: `team`, `ote`, `narrQuota`, `narrQuotaCredit`
+- Navigation blocked (`will-navigate` prevented), new windows denied
+- Webview attachment blocked via `web-contents-created` listener
+
+### Auto-Update
+
+- electron-updater checks GitHub Releases on app launch
+- Downloads update silently, prompts user to restart when ready
+- Triggered by pushing a git tag matching `v*` (e.g., `v1.1.0`)
+- GitHub Actions workflow builds both platforms and publishes release artifacts
+
+### Settings Persistence
+
+- electron-store saves Team, OTE, NARR Quota, and NARR Quota Credit between sessions
+- Stored in OS-appropriate user data directory (e.g., `%APPDATA%` on Windows)
+- Settings load on app start via IPC, save reactively on input change
+- Deal inputs (IARR, Renewed ARR, CARR, NARR, toggles) reset each session
 
 ## Domain Model
 
@@ -32,8 +65,8 @@ OTE splits 80/20: Salary (80%) and OTV (20%). PCR = OTV / NARR Quota. Commission
 
 ### Variables
 
-SE Profile (user-configurable):
-- Team: Team preset selector (populates uplift defaults, user can override)
+User Profile (user-configurable, persisted between sessions):
+- Team: Team preset selector (in header bar, independent of scenarios)
 - OTE: On-Target Earnings
 - Salary: OTE * 0.80 (auto-calculated)
 - OTV: OTE * 0.20 (auto-calculated)
@@ -46,7 +79,7 @@ Uplift Rates (editable, populated by team preset):
 - New Logo Uplift: Applied only when New Logo toggle is on (default 0.05%)
 - Multi-Year Uplift: Applied only when Multi-Year toggle is on (default 0.05%)
 - Accelerated PCR: Applied only to NARR above 100% attainment (default 0.25%)
-- RARR Rate: LaTam only, 0.10% of Renewed ARR (hidden for other teams)
+- RARR Rate: LATAM only, 0.10% of Renewed ARR (hidden for other teams)
 
 There is NO always-on uplift. The base rate is just PCR. Uplifts only apply when their conditions are met.
 
@@ -54,7 +87,7 @@ Deal Inputs:
 - IARR: Incumbent ARR (expiring contract ARR, zero for new logos)
 - Renewed ARR: ARR renewed on new opportunity (zero for new logos)
 - CARR: Churned ARR (INFORMATIONAL ONLY, not used in calculation)
-- New Module ARR: New module or new logo ARR
+- NARR: New module or new logo ARR (labeled "NARR" in UI, was "New Module ARR")
 - New Logo: Boolean toggle (is this a new logo deal?)
 - Multi-Year: Boolean toggle (is this a 3+ year contract?)
 
@@ -113,10 +146,10 @@ commission_above = narr_above * accelerated_rate
 narr_commission = commission_below + commission_above
 ```
 
-### LaTam RARR Commission
+### LATAM RARR Commission
 
 ```
-if team == "LaTam":
+if team == "LATAM":
     rarr_rate = 0.001  // 0.10%, user-editable
     rarr_commission = Renewed_ARR * rarr_rate
     total_commission = narr_commission + rarr_commission
@@ -128,24 +161,24 @@ otv_attainment = total_commission / OTV
 
 ## Team Presets
 
-Team selector at top of SE Profile auto-populates uplift rate defaults. User can override manually (changes team display to "Custom").
+Team selector in header bar (independent of scenario selection). Auto-populates uplift rate defaults. User can override manually (changes team display to "Custom"). Teams are alphabetized in the dropdown with Custom at top.
 
 | Team | New Logo Uplift | Multi-Year Uplift | Accelerated PCR | Notes |
 |------|----------------|-------------------|-----------------|-------|
-| MM/Commercial | 0.05% | 0.05% | 0.25% | |
-| Japan | 0.05% | 0.05% | 0.25% | |
 | APAC | 0.05% | 0.05% | 0.25% | |
-| US & Canada (excl Fed) | 0.045% | 0.045% | 0.20% | M1 values (80/20 split) |
 | EMEA | 0.045% | 0.045% | 0.20% | M1 values (80/20 split) |
-| US PubSec | 0.10% | N/A (0%) | 0.25% | Multi-Year toggle disabled |
-| LaTam | 0.05% | 0.05% | 0.25% | +RARR commission (0.10%) |
-| ISE - MM/Commercial | 0.025% | 0.025% | 0.075% | |
-| ISE - EMEA | 0.0225% | 0.0225% | 0.0725% | |
-| ISE - PubSec | 0.050% | N/A (0%) | 0.075% | Multi-Year toggle disabled |
 | GEE-VE Strategists | 0.025% | 0.025% | 0.15% | 100% NARR, Geo/Segment |
+| ISE - EMEA | 0.0225% | 0.0225% | 0.0725% | |
+| ISE - MM/Commercial | 0.025% | 0.025% | 0.075% | |
+| ISE - PubSec | 0.050% | N/A (0%) | 0.075% | Multi-Year toggle disabled |
+| Japan | 0.05% | 0.05% | 0.25% | |
+| LATAM | 0.05% | 0.05% | 0.25% | +RARR commission (0.10%) |
+| MM/Commercial | 0.05% | 0.05% | 0.25% | |
 | PSA - GSI & SPA | 0 | 0 | 0 | Pending — user enters manually |
-| PSA - MSP | 0 | 0 | 0 | Pending — NL Uplift = "MSP NARR" accelerator |
 | PSA - Hybrid | 0 | 0 | 0 | Pending — user enters manually |
+| PSA - MSP | 0 | 0 | 0 | Pending — NL Uplift = "MSP NARR" accelerator |
+| US & Canada (excl Fed) | 0.045% | 0.045% | 0.20% | M1 values (80/20 split) |
+| US PubSec | 0.10% | N/A (0%) | 0.25% | Multi-Year toggle disabled |
 
 ## Validation Test Cases
 
@@ -178,17 +211,21 @@ Expected: Day 1 ARR=$900,000, NARR=-$100,000. Commission=$0.
 ## UI Behavior
 
 - All derived values update reactively on every input change. No submit button.
+- Team selector in header bar, independent of scenarios. Scenarios do NOT override team selection.
 - Team selector populates uplift defaults; manual edits revert team to "Custom."
 - Results panel conditionally shows accelerated split lines only when the deal crosses 100%.
 - Results panel shows CARR as an informational line item, clearly labeled as not used in calculation.
 - Rate breakdown labels show additive components (e.g., "PCR + New Logo + Multi-Year").
-- LaTam RARR commission shown as separate line when applicable.
-- Four scenario preset buttons auto-populate all fields on click.
-- Clear/Reset zeroes all fields and resets team to Custom.
+- LATAM RARR commission shown as separate line when applicable.
+- Four scenario preset buttons auto-populate deal fields only (not team/profile).
+- Clear/Reset zeroes deal fields and resets uplift rates to team defaults.
 - Currency inputs display with $ and comma formatting.
-- Info icon (i) tooltips on every input field, positioned with JS to avoid overflow clipping.
+- Info icon (i) tooltips on every input field, positioned with JS (`position: fixed`) to avoid overflow clipping. Tooltips flip below trigger when near top edge.
 - Window resizable, minimum size accommodates all fields without scrolling.
 - PubSec teams disable and gray out Multi-Year toggle (N/A).
+- PSA teams show "Uplift values pending" note; user enters manually.
+- Color scheme: crimson/navy/grey (matches Tanium brand colors).
+- Section labeled "User Profile" (not "SE Profile").
 
 ## Code Conventions
 
@@ -197,14 +234,59 @@ Expected: Day 1 ARR=$900,000, NARR=-$100,000. Commission=$0.
 - Minimal comments, only where logic is non-obvious.
 - Prefer simplicity over abstraction.
 
-## Packaging
+## Packaging & Distribution
 
-- electron-builder configured for Windows (.exe) and macOS (.dmg).
-- Zero runtime dependencies. Fully offline.
-- No persistent storage. Inputs reset on app close.
+- electron-builder configured for Windows (NSIS installer .exe) and macOS (.dmg + .zip).
+- NSIS: one-click install, per-user, no directory selection.
+- GitHub Actions builds on tag push (`v*`) or manual workflow_dispatch.
+- GitHub Releases hosts distributables; electron-updater checks releases for updates.
+- App icon at `assets/icon.png`.
+- `asar: true`, `compression: maximum`.
+- Repo is public at github.com/earnstaf/SE-Compensation-Calculator.
 
 ### TODO: macOS Distribution
 - Add hardenedRuntime, entitlements, and code signing configuration before shipping macOS builds.
+- Without code signing, macOS users must run `xattr -cr` to bypass Gatekeeper.
+
+### TODO: Code Signing
+- Windows: Consider SSL.com or SignPath.io for EV/OV code signing certificate to eliminate SmartScreen warnings.
+- macOS: Apple Developer ID ($99/year) required for notarization. Without it, users get "damaged and can't be opened" error.
+
+## Dual-Measure Support
+
+Teams with 80/20 quota splits (US & Canada, EMEA, ISE-EMEA) use two PCRs derived from the same OTV:
+- L3 PCR = (OTV * 0.80) / L3 NARR Quota (regional, higher rate, lower quota)
+- L2 PCR = (OTV * 0.20) / L2 NARR Quota (geo, lower rate, higher quota)
+
+Each measure has its own New Logo and Multi-Year uplift values. Accelerated PCR is shared.
+
+A deal-level toggle ("Deal is within my L3 region") controls payout scope:
+- On (L3 deal): The deal earns commission on BOTH measures. L3 NARR rolls up to L2, so the same deal_narr is run through the commission formula twice (once with L3 rates/quota/attainment, once with L2), and both payouts are summed.
+- Off (L2-only deal): The deal earns commission on L2 only. Single payout.
+
+L3 and L2 attainment thresholds are independent. A deal can cross 100% on one measure but not the other.
+
+### Dual-Measure Toggle Behavior
+
+- Preset dual-measure teams: toggle is auto-enabled and locked on
+- Custom team: toggle is unlockable, user controls it
+- Single-measure preset teams: toggle is hidden
+
+### Dual-Measure Uplift Presets
+
+| Team | L3 NL | L3 MY | L2 NL | L2 MY | Accelerated PCR |
+|------|-------|-------|-------|-------|-----------------|
+| US & Canada (excl Fed) | 0.045% | 0.045% | 0.005% | 0.005% | 0.20% |
+| EMEA | 0.045% | 0.045% | 0.005% | 0.005% | 0.20% |
+| ISE - EMEA | 0.0225% | 0.0225% | 0.0025% | 0.0025% | 0.0725% |
+
+### Test Case: Dual-Measure L3 Deal
+
+OTE=200000, L3 NARR Quota=21309600, L2 NARR Quota=67680000, L3 Attainment=10%, L2 Attainment=10%.
+L3 PCR = (40000 * 0.80) / 21309600 = ~0.1502%.
+L2 PCR = (40000 * 0.20) / 67680000 = ~0.0118%.
+For an L3 deal with no uplifts: commission = (deal_narr * L3 PCR) + (deal_narr * L2 PCR).
+Both measures pay out independently based on their own attainment levels.
 
 ## Phase 2: Annual Calculator
 
@@ -234,7 +316,7 @@ All other teams use a single measure (100% of OTV against one NARR target).
 
 ### LaTam Special Case
 
-LaTam uses 100% L4 ARR (not NARR) as its quota measure. The RARR bonus commission (0.10% on Renewed ARR) is implemented in the deal-level calculator. For the annual calculator, the quota basis difference (ARR vs. NARR) will need dedicated handling.
+LATAM uses 100% L4 ARR (not NARR) as its quota measure. The RARR bonus commission (0.10% on Renewed ARR) is implemented in the deal-level calculator. For the annual calculator, the quota basis difference (ARR vs. NARR) will need dedicated handling.
 
 ### Annual Calculator Design Implications
 

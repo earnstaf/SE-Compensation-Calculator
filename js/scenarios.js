@@ -37,7 +37,12 @@ const TEAM_PRESETS = {
     multiYearUplift: 0.00045,
     acceleratedPcr: 0.002,
     disableMultiYear: false,
-    latamMode: false
+    latamMode: false,
+    dualMeasure: true,
+    l3NewLogoUplift: 0.00045,
+    l3MultiYearUplift: 0.00045,
+    l2NewLogoUplift: 0.00005,
+    l2MultiYearUplift: 0.00005
   },
   'emea': {
     label: 'EMEA',
@@ -45,7 +50,12 @@ const TEAM_PRESETS = {
     multiYearUplift: 0.00045,
     acceleratedPcr: 0.002,
     disableMultiYear: false,
-    latamMode: false
+    latamMode: false,
+    dualMeasure: true,
+    l3NewLogoUplift: 0.00045,
+    l3MultiYearUplift: 0.00045,
+    l2NewLogoUplift: 0.00005,
+    l2MultiYearUplift: 0.00005
   },
   'us-pubsec': {
     label: 'US PubSec',
@@ -78,7 +88,12 @@ const TEAM_PRESETS = {
     multiYearUplift: 0.000225,
     acceleratedPcr: 0.000725,
     disableMultiYear: false,
-    latamMode: false
+    latamMode: false,
+    dualMeasure: true,
+    l3NewLogoUplift: 0.000225,
+    l3MultiYearUplift: 0.000225,
+    l2NewLogoUplift: 0.000025,
+    l2MultiYearUplift: 0.000025
   },
   'ise-pubsec': {
     label: 'ISE - PubSec',
