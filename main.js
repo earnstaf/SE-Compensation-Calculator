@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, shell, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, dialog, shell, ipcMain } = require('electron');
 const path = require('path');
 const { autoUpdater } = require('electron-updater');
 
@@ -63,6 +63,28 @@ function createWindow() {
 app.whenReady().then(async () => {
   await initStore();
   createWindow();
+
+  const appVersion = app.getVersion();
+  const aboutMessage = `Pre-Sales Compensation Calculator\n\nVersion: ${appVersion}\nAuthor: Eric Arnst`;
+
+  const menuTemplate = [
+    ...(isMac ? [{
+      label: app.name,
+      submenu: [
+        { label: 'About', click: () => dialog.showMessageBox({ type: 'info', title: 'About', message: aboutMessage }) },
+        { type: 'separator' },
+        { role: 'quit' }
+      ]
+    }] : []),
+    {
+      label: 'Help',
+      submenu: [
+        { label: 'About', click: () => dialog.showMessageBox({ type: 'info', title: 'About', message: aboutMessage }) }
+      ]
+    }
+  ];
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate));
 
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = true;
