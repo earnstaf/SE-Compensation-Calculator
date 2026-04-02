@@ -823,9 +823,7 @@ select option {
 
   .scenarios-bar {
     width: 100%;
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    -webkit-overflow-scrolling: touch;
+    flex-wrap: wrap;
   }
 
   .input-panels {
