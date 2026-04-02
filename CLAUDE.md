@@ -258,7 +258,7 @@ Teams with 80/20 quota splits (US & Canada, EMEA, ISE-EMEA) use two PCRs derived
 - L3 PCR = (OTV * 0.80) / L3 NARR Quota (regional, higher rate, lower quota)
 - L2 PCR = (OTV * 0.20) / L2 NARR Quota (geo, lower rate, higher quota)
 
-Each measure has its own New Logo and Multi-Year uplift values. Accelerated PCR is shared.
+Each measure has its own New Logo, Multi-Year, and Accelerated PCR uplift values. L3 Accelerated PCR (0.20%) + L2 Accelerated PCR (0.05%) = 0.25%, matching the single-measure Accelerated PCR by design.
 
 A deal-level toggle ("Deal is within my L3 region") controls payout scope:
 - On (L3 deal): The deal earns commission on BOTH measures. L3 NARR rolls up to L2, so the same deal_narr is run through the commission formula twice (once with L3 rates/quota/attainment, once with L2), and both payouts are summed.
@@ -274,11 +274,11 @@ L3 and L2 attainment thresholds are independent. A deal can cross 100% on one me
 
 ### Dual-Measure Uplift Presets
 
-| Team | L3 NL | L3 MY | L2 NL | L2 MY | Accelerated PCR |
-|------|-------|-------|-------|-------|-----------------|
-| US & Canada (excl Fed) | 0.045% | 0.045% | 0.005% | 0.005% | 0.20% |
-| EMEA | 0.045% | 0.045% | 0.005% | 0.005% | 0.20% |
-| ISE - EMEA | 0.0225% | 0.0225% | 0.0025% | 0.0025% | 0.0725% |
+| Team | L3 NL | L3 MY | L3 Accel | L2 NL | L2 MY | L2 Accel |
+|------|-------|-------|---------|-------|-------|---------|
+| US & Canada (excl Fed) | 0.045% | 0.045% | 0.20% | 0.005% | 0.005% | 0.05% |
+| EMEA | 0.045% | 0.045% | 0.20% | 0.005% | 0.005% | 0.05% |
+| ISE - EMEA | 0.0225% | 0.0225% | 0.0725% | 0.0025% | 0.0025% | 0.0025% |
 
 ### Test Case: Dual-Measure L3 Deal
 

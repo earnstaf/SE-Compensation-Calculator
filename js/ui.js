@@ -30,7 +30,8 @@
     l3MultiYearUplift: $('l3-multi-year-uplift'),
     l2NewLogoUplift: $('l2-new-logo-uplift'),
     l2MultiYearUplift: $('l2-multi-year-uplift'),
-    dmAcceleratedPcr: $('dm-accelerated-pcr')
+    l3AcceleratedPcr: $('l3-accelerated-pcr'),
+    l2AcceleratedPcr: $('l2-accelerated-pcr')
   };
 
   const teamSelect = $('team-select');
@@ -222,7 +223,8 @@
       fields.l3MultiYearUplift.value = preset.l3MultiYearUplift;
       fields.l2NewLogoUplift.value = preset.l2NewLogoUplift;
       fields.l2MultiYearUplift.value = preset.l2MultiYearUplift;
-      fields.dmAcceleratedPcr.value = preset.acceleratedPcr;
+      fields.l3AcceleratedPcr.value = preset.l3AcceleratedPcr;
+      fields.l2AcceleratedPcr.value = preset.l2AcceleratedPcr;
     } else if (teamKey === 'custom') {
       // Custom: show toggle, let user control it
       dualMeasureLocked = false;
@@ -251,12 +253,14 @@
     if (dualMeasureActive && preset.dualMeasure) {
       const l3nl = parseRate(fields.l3NewLogoUplift.value);
       const l3my = parseRate(fields.l3MultiYearUplift.value);
+      const l3ap = parseRate(fields.l3AcceleratedPcr.value);
       const l2nl = parseRate(fields.l2NewLogoUplift.value);
       const l2my = parseRate(fields.l2MultiYearUplift.value);
-      const ap = parseRate(fields.dmAcceleratedPcr.value);
+      const l2ap = parseRate(fields.l2AcceleratedPcr.value);
       if (l3nl !== preset.l3NewLogoUplift || l3my !== preset.l3MultiYearUplift ||
+          l3ap !== preset.l3AcceleratedPcr ||
           l2nl !== preset.l2NewLogoUplift || l2my !== preset.l2MultiYearUplift ||
-          ap !== preset.acceleratedPcr) {
+          l2ap !== preset.l2AcceleratedPcr) {
         switchToCustom();
       }
     } else {
@@ -304,7 +308,8 @@
         l3MultiYearUplift: parseRate(fields.l3MultiYearUplift.value),
         l2NewLogoUplift: parseRate(fields.l2NewLogoUplift.value),
         l2MultiYearUplift: parseRate(fields.l2MultiYearUplift.value),
-        acceleratedPcr: parseRate(fields.dmAcceleratedPcr.value),
+        l3AcceleratedPcr: parseRate(fields.l3AcceleratedPcr.value),
+        l2AcceleratedPcr: parseRate(fields.l2AcceleratedPcr.value),
         dealInL3: l3RegionToggle.classList.contains('active')
       });
     }
@@ -398,7 +403,7 @@
     html += `<div class="rate-breakdown">${rateLabel}</div>`;
 
     if (measure.straddlesThreshold) {
-      const accelLabel = rateLabel + ' + Accelerated PCR';
+      const accelLabel = rateLabel + ' + ' + label + ' Accelerated PCR';
       html += resultRow('Accelerated Rate', formatRateAsPercent(measure.acceleratedRate));
       html += `<div class="rate-breakdown">${accelLabel}</div>`;
     }
@@ -623,7 +628,7 @@
   });
 
   // Event: dual-measure rate fields
-  [fields.l3NewLogoUplift, fields.l3MultiYearUplift, fields.l2NewLogoUplift, fields.l2MultiYearUplift, fields.dmAcceleratedPcr].forEach(input => {
+  [fields.l3NewLogoUplift, fields.l3MultiYearUplift, fields.l3AcceleratedPcr, fields.l2NewLogoUplift, fields.l2MultiYearUplift, fields.l2AcceleratedPcr].forEach(input => {
     input.addEventListener('input', function () {
       checkTeamModified();
       recalculate();
@@ -761,7 +766,8 @@
     fields.l3MultiYearUplift.value = '0.00045';
     fields.l2NewLogoUplift.value = '0.00005';
     fields.l2MultiYearUplift.value = '0.00005';
-    fields.dmAcceleratedPcr.value = '0.002';
+    fields.l3AcceleratedPcr.value = '0.002';
+    fields.l2AcceleratedPcr.value = '0.0005';
 
     // Reset L3 region toggle to default (on)
     l3RegionToggle.classList.add('active');

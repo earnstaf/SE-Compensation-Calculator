@@ -65,7 +65,8 @@ function calculateDualMeasureCompensation(inputs) {
     l3MultiYearUplift,
     l2NewLogoUplift,
     l2MultiYearUplift,
-    acceleratedPcr,
+    l3AcceleratedPcr,
+    l2AcceleratedPcr,
     iarr,
     renewedArr,
     carr,
@@ -85,14 +86,14 @@ function calculateDualMeasureCompensation(inputs) {
   const dealNarr = narrQuotaRetirement;
 
   const l2 = calculateMeasureCommission(
-    dealNarr, l2Pcr, l2NewLogoUplift, l2MultiYearUplift, acceleratedPcr,
+    dealNarr, l2Pcr, l2NewLogoUplift, l2MultiYearUplift, l2AcceleratedPcr,
     l2NarrQuota, l2NarrQuotaCredit, newLogoDeal, multiYearDeal
   );
 
   let l3 = null;
   if (dealInL3) {
     l3 = calculateMeasureCommission(
-      dealNarr, l3Pcr, l3NewLogoUplift, l3MultiYearUplift, acceleratedPcr,
+      dealNarr, l3Pcr, l3NewLogoUplift, l3MultiYearUplift, l3AcceleratedPcr,
       l3NarrQuota, l3NarrQuotaCredit, newLogoDeal, multiYearDeal
     );
   }
