@@ -846,7 +846,7 @@ select option {
 }
 
 .slider-text-input {
-  width: 70px;
+  width: 80px;
   flex-shrink: 0;
 }
 
