@@ -119,9 +119,12 @@ app.whenReady().then(async () => {
     } else {
       dialog.showMessageBox({
         type: 'info',
-        title: 'Update Available',
-        message: `Version ${info.version} is available. Would you like to download and install it?`,
-        buttons: ['Update', 'Skip']
+        title: 'Software Update',
+        message: 'A new version of Pre-Sales Compensation Calculator is available!',
+        detail: `Version ${info.version} is now available (you have ${appVersion}). Would you like to download it now?`,
+        buttons: ['Install Update', 'Remind Me Later', 'Skip This Version'],
+        defaultId: 0,
+        cancelId: 2
       }).then((result) => {
         if (result.response === 0) {
           autoUpdater.downloadUpdate();
@@ -138,8 +141,10 @@ app.whenReady().then(async () => {
     dialog.showMessageBox({
       type: 'info',
       title: 'Update Ready',
-      message: `Version ${info.version} has been downloaded. Restart now to apply the update?`,
-      buttons: ['Restart', 'Later']
+      message: `Pre-Sales Compensation Calculator ${info.version} has been downloaded.`,
+      detail: 'The update will be applied when you restart the application.',
+      buttons: ['Restart Now', 'Later'],
+      defaultId: 0
     }).then((result) => {
       if (result.response === 0) {
         autoUpdater.quitAndInstall();

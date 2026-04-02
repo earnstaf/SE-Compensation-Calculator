@@ -8,9 +8,9 @@ No internet connection, accounts, or dependencies needed after installation.
 
 | Platform | Download | Notes |
 |----------|----------|-------|
-| **Windows** | [Pre-Sales-Compensation-Calculator-Setup-1.1.4.exe](https://github.com/earnstaf/SE-Compensation-Calculator/releases/download/v1.1.4/Pre-Sales-Compensation-Calculator-Setup-1.1.4.exe) | NSIS installer, auto-updates on future releases |
-| **macOS (dmg)** | [Pre-Sales-Compensation-Calculator-1.1.4-arm64.dmg](https://github.com/earnstaf/SE-Compensation-Calculator/releases/download/v1.1.4/Pre-Sales-Compensation-Calculator-1.1.4-arm64.dmg) | Drag to Applications (see install note below) |
-| **macOS (zip)** | [Pre-Sales-Compensation-Calculator-1.1.4-arm64-mac.zip](https://github.com/earnstaf/SE-Compensation-Calculator/releases/download/v1.1.4/Pre-Sales-Compensation-Calculator-1.1.4-arm64-mac.zip) | Extract and run (see install note below) |
+| **Windows** | [Download Installer (.exe)](https://github.com/earnstaf/SE-Compensation-Calculator/releases/latest/download/Pre-Sales-Compensation-Calculator-Setup.exe) | NSIS installer, auto-updates on future releases |
+| **macOS (dmg)** | [Download DMG](https://github.com/earnstaf/SE-Compensation-Calculator/releases/latest/download/Pre-Sales-Compensation-Calculator-arm64.dmg) | Drag to Applications (see install note below) |
+| **macOS (zip)** | [Download ZIP](https://github.com/earnstaf/SE-Compensation-Calculator/releases/latest/download/Pre-Sales-Compensation-Calculator-arm64.zip) | Extract and run (see install note below) |
 
 All versions available on the [Releases page](../../releases/latest).
 
