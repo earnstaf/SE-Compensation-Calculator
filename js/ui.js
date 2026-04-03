@@ -649,9 +649,13 @@
     const sLabel = currentSecondaryLabel;
 
     if (r.dealInL3 && r.l3) {
-      html += buildDealAttainmentBar({ segments: buildMeasureBarSegments(r.l3), title: pLabel + ' Attainment' });
+      const l3Segs = buildMeasureBarSegments(r.l3);
+      console.log('L3 bar segments:', JSON.stringify(l3Segs), 'narrQuotaAttainment:', r.l3.narrQuotaAttainment, 'postDealAttainment:', r.l3.postDealAttainment);
+      html += buildDealAttainmentBar({ segments: l3Segs, title: pLabel + ' Attainment' });
     }
-    html += buildDealAttainmentBar({ segments: buildMeasureBarSegments(r.l2), title: sLabel + ' Attainment' });
+    const l2Segs = buildMeasureBarSegments(r.l2);
+    console.log('L2 bar segments:', JSON.stringify(l2Segs), 'narrQuotaAttainment:', r.l2.narrQuotaAttainment, 'postDealAttainment:', r.l2.postDealAttainment);
+    html += buildDealAttainmentBar({ segments: l2Segs, title: sLabel + ' Attainment' });
 
     if (r.dealInL3 && r.l3) {
       html += renderMeasureSection(r.l3, pLabel, 'Primary', inputs, dealNarr);
@@ -958,15 +962,8 @@
     let html = `<div class="deal-attainment-bar">`;
     if (title) html += `<div class="deal-bar-title">${title}</div>`;
 
-    // Markers above the track
-    html += `<div class="deal-bar-markers">`;
-    for (const m of milestones) {
-      const cls = m === 100 ? ' deal-bar-marker-100' : '';
-      html += `<div class="deal-bar-marker${cls}" style="left:${toLeft(m)}%">${m}%</div>`;
-    }
-    html += `</div>`;
-
-    // Track with segments and threshold
+    // Track with segments, tick lines, threshold, and labels
+    html += `<div class="deal-bar-track-wrap">`;
     html += `<div class="deal-bar-track">`;
     for (const seg of segments) {
       const left = toLeft(seg.startPct);
@@ -976,6 +973,19 @@
       }
     }
     html += `<div class="deal-bar-threshold" style="left:${toLeft(100)}%"></div>`;
+    for (const m of milestones) {
+      const opacity = m === 100 ? '0.6' : '0.2';
+      html += `<div class="deal-bar-tick" style="left:${toLeft(m)}%;opacity:${opacity}"></div>`;
+    }
+    html += `</div>`;
+
+    // Labels below the track
+    html += `<div class="deal-bar-label-row">`;
+    for (const m of milestones) {
+      const cls = m === 100 ? ' deal-bar-label-100' : '';
+      html += `<span class="deal-bar-label${cls}" style="left:${toLeft(m)}%">${m}%</span>`;
+    }
+    html += `</div>`;
     html += `</div>`;
 
     // Legend
