@@ -651,6 +651,11 @@
     const sLabel = currentSecondaryLabel;
 
     if (r.dealInL3 && r.l3) {
+      html += buildDealAttainmentBar({ segments: buildMeasureBarSegments(r.l3), title: pLabel + ' Attainment' });
+    }
+    html += buildDealAttainmentBar({ segments: buildMeasureBarSegments(r.l2), title: sLabel + ' Attainment' });
+
+    if (r.dealInL3 && r.l3) {
       html += renderMeasureSection(r.l3, pLabel, 'Primary', inputs, dealNarr);
     }
     html += renderMeasureSection(r.l2, sLabel, 'Secondary', inputs, dealNarr);
@@ -714,6 +719,8 @@
     html += resultRow('Pre-Deal Attainment', formatPercent(r.narrQuotaAttainment));
     html += resultRow('Post-Deal Attainment', formatPercent(r.postDealAttainment));
     html += `</div>`;
+
+    html += buildDealAttainmentBar({ segments: buildSingleDealSegments(r), title: 'NARR Quota Attainment' });
 
     html += `<div class="result-group">`;
     html += `<div class="result-group-title">Commission Rates</div>`;
