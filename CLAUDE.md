@@ -232,6 +232,10 @@ Expected: Day 1 ARR=$900,000, NARR=-$100,000. Commission=$0.
 - Section labeled "User Profile" (not "SE Profile").
 - Help > About menu shows version and author (Eric Arnst).
 
+## Uplift Rate Display
+
+Uplift rate input fields (New Logo, Multi-Year, Accelerated PCR, RARR) display values as percentages (e.g., `0.05%`) rather than raw decimals (`0.0005`). Team presets populate fields using `formatRateAsPercent()`. `parseRate()` detects the `%` suffix and divides by 100 to convert back to decimal for calculations. Both formats are accepted as user input. Reset defaults use percentage strings. `checkTeamModified()` still correctly compares parsed values against preset decimals.
+
 ## Code Conventions
 
 - Calculation logic isolated in calc-engine.js with no DOM dependencies. Pure input/output.
@@ -337,34 +341,47 @@ Visual progress bar showing pre-deal and post-deal attainment relative to key th
 
 ### Deal Calculator Bar
 
-Appears in Commission Breakdown after Quota Attainment rows. Shows:
-- Pre-deal segment in navy (`--bar-pre-deal`)
-- Deal increment in crimson (`--accent`) below 100%, green (`--bar-accel`) above 100%
-- If deal straddles 100%: split segment (crimson below threshold, green above)
+Appears in Commission Breakdown for both single-measure (after Quota Attainment rows) and dual-measure (after Deal Metrics, one bar per measure). Two-segment design:
+- **Pre-deal segment** in muted color: dark red (`#4a2030`) below 100%, dark green (`#2d5a3a`) at/above 100%
+- **Deal increment segment** in bright color: crimson (`#751323`) below 100%, green (`#66bb6a`) at/above 100%
+- If deal straddles 100%: increment splits at threshold (crimson below, green above)
+- If no deal entered: only the muted pre-deal fill shows current attainment from quota credit
 - 100% threshold: prominent 2px vertical line
-- Milestone markers at 50%, 75%, 100%, 125%, 150%
+- Milestone labels at 50%, 75%, 100%, 125%, 150% below the track (100% is bold)
+- Tick lines inside the track at each milestone
 - Dynamic scale: max(150%, ceil(post-deal / 25) * 25)
 
 ### Pipeline Attainment Bar
 
-When multiple deals: each deal gets a distinct color segment. Cumulative bar shows which deal pushed past each milestone. Deal crossing 100% has its segment split at the threshold.
+When multiple deals: each deal gets a distinct color segment from `DEAL_COLORS` palette. Cumulative bar shows which deal pushed past each milestone. Deal crossing 100% has its segment split at the threshold.
 
 ### Dual-Measure Bars
 
-Two bars per calculation (one per measure), each with independent 100% thresholds.
+Two bars per calculation (one per measure), each with independent 100% thresholds. Each measure independently flips from red to green based on its own post-deal attainment.
 
 ### Annual Projections Bar
 
-Replaced old `buildAttainmentBar()` with new `buildDealAttainmentBar()`. Single segment from 0 to target attainment. For dual-measure: two bars.
+Replaced old `buildAttainmentBar()` with new `buildDealAttainmentBar()`. Single segment from 0 to target attainment, colored crimson below 100% or green at/above 100%. For dual-measure: two bars.
 
 ### Technical
 
 - Pure CSS/HTML, no charting library
 - `buildDealAttainmentBar({ segments, title })` — generic builder accepting array of `{ startPct, endPct, color, label }`
-- `buildSingleDealSegments(r)` / `buildMeasureBarSegments(measure)` — segment builders for single deals
+- `buildAttainmentSegments(prePct, postPct, hasDealNarr)` — shared helper for pre-deal + deal increment logic
+- `buildSingleDealSegments(r)` / `buildMeasureBarSegments(measure)` — thin wrappers calling `buildAttainmentSegments`
 - `buildPipelineSegments(allResults, baseInputs)` / `buildPipelineSegmentsL2()` — segment builders for pipeline
+- `BAR_COLORS` constant: hex colors for inline styles (`preDeal: '#3a4a8a'`, `accent: '#751323'`, `accel: '#66bb6a'`)
+- `BAR_COLORS_MUTED` constant: darker shades for pre-deal segments (`belowQuota: '#4a2030'`, `aboveQuota: '#2d5a3a'`)
+- Bar rendered inside a bordered card container (`.deal-attainment-bar`) with padding and subtle background
+- Labels positioned below the track (not above) to prevent text overlap
 - CSS transitions on segment width (200ms ease)
 - Legend shows color swatches with labels
+
+### Critical Implementation Notes
+
+- **Inline styles must use hex colors, NOT CSS variables.** Setting `background:var(--name)` in an HTML `style` attribute causes browsers to invalidate the entire style string, making segments invisible (zero width, transparent background). Always use `BAR_COLORS` constants.
+- **gh-pages CSP must include `'unsafe-inline'` for `style-src`.** Without it, all inline style attributes are blocked, preventing dynamic positioning and sizing of bar segments.
+- **Uplift rate display**: Fields show percentages (e.g., `0.05%`) not raw decimals (`0.0005`). `parseRate()` handles both formats — if the string ends with `%`, divides by 100.
 
 ## Packaging & Distribution
 
@@ -490,3 +507,30 @@ Keys added to ALLOWED_SETTINGS: `targetAttainment`, `newLogoPct`, `multiYearPct`
 - Single-measure at 120%: Above-100% buckets appear with accelerated rates
 - Deal mix overlap: NL 60% + MY 60% → 20% overlap bucket with both uplifts
 - Dual-measure asymmetric: L3 at 120%, L2 at 80% — each evaluates independently
+
+## Web Version (gh-pages)
+
+The `gh-pages` branch hosts a browser-based version at GitHub Pages. It shares all UI, calculation, and rendering code with the Electron version but differs in:
+
+### Settings Persistence
+- Uses `js/web-settings.js` (localStorage wrapper via `WebSettings` object) instead of Electron's `electron-store` via IPC
+- `saveSettings()` calls `WebSettings.save(data)` (synchronous) instead of `window.appSettings.save(data)` (async IPC)
+- `loadSettings()` is synchronous, no `async/await`, no `appVersion` from IPC
+
+### PDF Export
+- Uses `html2pdf.js` (v0.10.2 from cdnjs CDN) instead of Electron's `webContents.printToPDF()`
+- Creates a temporary DOM container, renders via html2pdf, then removes the container
+- CDN script loaded with SRI integrity hash
+
+### index.html Differences
+- Includes `<script>` tags for `html2pdf.bundle.min.js` (CDN) and `js/web-settings.js` before the app scripts
+- CSP meta tag: `style-src 'self' 'unsafe-inline'` (inline styles required for attainment bars), `script-src 'self' https://cdnjs.cloudflare.com`
+- **IMPORTANT**: When syncing `index.html` from master to gh-pages, do NOT overwrite — the gh-pages version has extra script tags that master doesn't need
+
+### Syncing master → gh-pages
+When copying `js/ui.js` from master to gh-pages, three adaptations are required:
+1. `saveSettings()`: Replace `if (!settingsLoaded || !window.appSettings) return` → `if (!settingsLoaded) return`, and `window.appSettings.save(data)` → `WebSettings.save(data)`
+2. `loadSettings()`: Replace `async function loadSettings()` block with synchronous version using `WebSettings.load()` (no `appVersion`, no `await`)
+3. PDF export handler: Replace `window.pdfExport.generate(html, prefix)` block with `html2pdf()` pipeline
+
+Other files (css/styles.css, js/calc-engine.js, js/scenarios.js, CLAUDE.md) can be copied directly from master.
