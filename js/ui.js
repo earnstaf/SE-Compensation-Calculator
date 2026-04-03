@@ -92,6 +92,9 @@
   let appVersion = '';
   let comparisonMode = false;
   let annualMode = false;
+  let pipelineMode = false;
+  let deals = [];
+  let nextDealId = 2;
   let currentPrimaryLabel = 'L3';
   let currentSecondaryLabel = 'L2';
   let currentPrimarySplit = 0.80;
@@ -517,6 +520,10 @@
       recalculateAnnual();
       return;
     }
+    if (pipelineMode) {
+      recalculatePipeline();
+      return;
+    }
     if (comparisonMode) {
       recalculateComparison();
       return;
@@ -644,6 +651,11 @@
     const sLabel = currentSecondaryLabel;
 
     if (r.dealInL3 && r.l3) {
+      html += buildDealAttainmentBar({ segments: buildMeasureBarSegments(r.l3), title: pLabel + ' Attainment' });
+    }
+    html += buildDealAttainmentBar({ segments: buildMeasureBarSegments(r.l2), title: sLabel + ' Attainment' });
+
+    if (r.dealInL3 && r.l3) {
       html += renderMeasureSection(r.l3, pLabel, 'Primary', inputs, dealNarr);
     }
     html += renderMeasureSection(r.l2, sLabel, 'Secondary', inputs, dealNarr);
@@ -707,6 +719,8 @@
     html += resultRow('Pre-Deal Attainment', formatPercent(r.narrQuotaAttainment));
     html += resultRow('Post-Deal Attainment', formatPercent(r.postDealAttainment));
     html += `</div>`;
+
+    html += buildDealAttainmentBar({ segments: buildSingleDealSegments(r), title: 'NARR Quota Attainment' });
 
     html += `<div class="result-group">`;
     html += `<div class="result-group-title">Commission Rates</div>`;
@@ -884,10 +898,19 @@
 
     // Attainment bar
     if (inputs.dualMeasure) {
-      html += buildAttainmentBar(inputs.l3TargetAttainment, currentPrimaryLabel);
-      html += buildAttainmentBar(inputs.l2TargetAttainment, currentSecondaryLabel);
+      html += buildDealAttainmentBar({
+        segments: [{ startPct: 0, endPct: inputs.l3TargetAttainment * 100, color: 'var(--accent)', label: currentPrimaryLabel + ' (' + (inputs.l3TargetAttainment * 100).toFixed(0) + '%)' }],
+        title: currentPrimaryLabel + ' Attainment'
+      });
+      html += buildDealAttainmentBar({
+        segments: [{ startPct: 0, endPct: inputs.l2TargetAttainment * 100, color: 'var(--accent)', label: currentSecondaryLabel + ' (' + (inputs.l2TargetAttainment * 100).toFixed(0) + '%)' }],
+        title: currentSecondaryLabel + ' Attainment'
+      });
     } else {
-      html += buildAttainmentBar(inputs.targetAttainment);
+      html += buildDealAttainmentBar({
+        segments: [{ startPct: 0, endPct: inputs.targetAttainment * 100, color: 'var(--accent)', label: 'Target (' + (inputs.targetAttainment * 100).toFixed(0) + '%)' }],
+        title: 'NARR Quota Attainment'
+      });
     }
 
     // Summary
@@ -925,28 +948,698 @@
     updateActionButtons();
   }
 
-  function buildAttainmentBar(attainment, label) {
-    const pct = attainment * 100;
-    // Map 0-200% to 0-100% bar width
-    const fillWidth = Math.min(100, pct / 2);
-    const indicatorLeft = Math.min(100, pct / 2);
-    const markers = [
-      { pct: 50, left: 25 },
-      { pct: 75, left: 37.5 },
-      { pct: 100, left: 50, cls: ' marker-100' },
-      { pct: 125, left: 62.5 },
-      { pct: 150, left: 75 }
-    ];
+  function buildDealAttainmentBar(opts) {
+    const segments = opts.segments || [];
+    const title = opts.title || '';
+    const maxEnd = segments.reduce((m, s) => Math.max(m, s.endPct), 0);
+    const maxPct = Math.max(150, Math.ceil(maxEnd / 25) * 25);
+    const toLeft = pct => Math.max(0, Math.min(100, (pct / maxPct) * 100));
 
-    let title = label ? `<div class="result-group-title">${label} Attainment: ${pct.toFixed(0)}%</div>` : '';
-    let html = `<div class="attainment-bar">${title}<div class="attainment-bar-track">`;
-    html += `<div class="attainment-bar-fill" style="width:${fillWidth}%"></div>`;
-    for (const m of markers) {
-      html += `<div class="attainment-marker${m.cls || ''}" style="left:${m.left}%">${m.pct}%</div>`;
+    const milestones = [50, 75, 100, 125, 150].filter(m => m <= maxPct);
+
+    let html = `<div class="deal-attainment-bar">`;
+    if (title) html += `<div class="deal-bar-title">${title}</div>`;
+
+    // Markers above the track
+    html += `<div class="deal-bar-markers">`;
+    for (const m of milestones) {
+      const cls = m === 100 ? ' deal-bar-marker-100' : '';
+      html += `<div class="deal-bar-marker${cls}" style="left:${toLeft(m)}%">${m}%</div>`;
     }
-    html += `<div class="attainment-indicator" style="left:${indicatorLeft}%"></div>`;
-    html += `</div></div>`;
+    html += `</div>`;
+
+    // Track with segments and threshold
+    html += `<div class="deal-bar-track">`;
+    for (const seg of segments) {
+      const left = toLeft(seg.startPct);
+      const width = toLeft(seg.endPct) - left;
+      if (width > 0) {
+        html += `<div class="deal-bar-segment" style="left:${left}%;width:${width}%;background:${seg.color}" title="${seg.label || ''}"></div>`;
+      }
+    }
+    html += `<div class="deal-bar-threshold" style="left:${toLeft(100)}%"></div>`;
+    html += `</div>`;
+
+    // Legend
+    const legendItems = segments.filter(s => s.label && (s.endPct - s.startPct) > 0);
+    if (legendItems.length > 0) {
+      html += `<div class="deal-bar-legend">`;
+      for (const seg of legendItems) {
+        html += `<span class="deal-bar-legend-item"><span class="deal-bar-swatch" style="background:${seg.color}"></span>${seg.label}</span>`;
+      }
+      html += `</div>`;
+    }
+
+    html += `</div>`;
     return html;
+  }
+
+  function buildSingleDealSegments(r) {
+    const segments = [];
+    const prePct = r.narrQuotaAttainment * 100;
+    const postPct = r.postDealAttainment * 100;
+
+    if (prePct > 0) {
+      segments.push({ startPct: 0, endPct: prePct, color: 'var(--bar-pre-deal)', label: 'Pre-deal (' + prePct.toFixed(1) + '%)' });
+    }
+
+    if (r.narrQuotaRetirement > 0) {
+      if (prePct >= 100) {
+        segments.push({ startPct: prePct, endPct: postPct, color: 'var(--bar-accel)', label: 'Deal (accelerated)' });
+      } else if (postPct <= 100) {
+        segments.push({ startPct: prePct, endPct: postPct, color: 'var(--accent)', label: 'Deal' });
+      } else {
+        segments.push({ startPct: prePct, endPct: 100, color: 'var(--accent)', label: 'Deal (base)' });
+        segments.push({ startPct: 100, endPct: postPct, color: 'var(--bar-accel)', label: 'Deal (accelerated)' });
+      }
+    }
+
+    return segments;
+  }
+
+  function buildMeasureBarSegments(measure) {
+    const segments = [];
+    const prePct = measure.narrQuotaAttainment * 100;
+    const postPct = measure.postDealAttainment * 100;
+
+    if (prePct > 0) {
+      segments.push({ startPct: 0, endPct: prePct, color: 'var(--bar-pre-deal)', label: 'Pre-deal (' + prePct.toFixed(1) + '%)' });
+    }
+
+    if (measure.commission > 0) {
+      if (prePct >= 100) {
+        segments.push({ startPct: prePct, endPct: postPct, color: 'var(--bar-accel)', label: 'Deal (accelerated)' });
+      } else if (postPct <= 100) {
+        segments.push({ startPct: prePct, endPct: postPct, color: 'var(--accent)', label: 'Deal' });
+      } else {
+        segments.push({ startPct: prePct, endPct: 100, color: 'var(--accent)', label: 'Deal (base)' });
+        segments.push({ startPct: 100, endPct: postPct, color: 'var(--bar-accel)', label: 'Deal (accelerated)' });
+      }
+    }
+
+    return segments;
+  }
+
+  // === Pipeline Stacking ===
+
+  const pipelineContainer = $('pipeline-container');
+  const btnAddDeal = $('btn-add-deal');
+  const btnClearPipeline = $('btn-clear-pipeline');
+
+  const DEAL_COLORS = ['#e53935', '#2196f3', '#ff9800', '#9c27b0', '#00bcd4', '#e91e63', '#8bc34a', '#ff5722'];
+
+  function createDealBoxHtml(dealId, dealNumber) {
+    const myDisabled = multiYearDisabled ? ' disabled' : '';
+    const myFieldCls = multiYearDisabled ? ' field-disabled' : '';
+    const l3Section = dualMeasureActive ? `
+          <div class="field toggle-field dual-measure-only">
+            <label class="field-label" id="deal-${dealId}-l3-region-toggle-label">
+              Deal is within my ${currentPrimaryLabel} region
+            </label>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="toggle active" id="deal-${dealId}-l3-region-toggle" data-deal-id="${dealId}" data-deal-toggle="l3Region" role="switch" aria-checked="true" tabindex="0"></div>
+              <span class="toggle-label" id="deal-${dealId}-l3-region-label">Yes</span>
+            </div>
+          </div>` : '';
+
+    return `<div class="deal-box" data-deal-id="${dealId}" id="deal-box-${dealId}">
+      <div class="deal-box-header">
+        <span class="deal-box-number">Deal ${dealNumber}</span>
+        <input type="text" class="deal-box-name" id="deal-${dealId}-name" value="Deal ${dealNumber}" data-deal-id="${dealId}" data-deal-field="name">
+        <div class="deal-box-actions">
+          <button class="deal-box-btn deal-box-move-up" data-deal-id="${dealId}" title="Move up">&#9650;</button>
+          <button class="deal-box-btn deal-box-move-down" data-deal-id="${dealId}" title="Move down">&#9660;</button>
+          <button class="deal-box-btn deal-box-duplicate" data-deal-id="${dealId}" title="Duplicate">&#10697;</button>
+          <button class="deal-box-btn deal-box-remove" data-deal-id="${dealId}" title="Remove">&#10005;</button>
+        </div>
+      </div>
+      <div class="field-grid">
+        <div class="field">
+          <label class="field-label">IARR</label>
+          <div class="input-wrap"><span class="input-prefix">$</span><input type="text" id="deal-${dealId}-iarr" value="0" data-currency data-deal-id="${dealId}" data-deal-field="iarr"></div>
+        </div>
+        <div class="field">
+          <label class="field-label">Renewed ARR</label>
+          <div class="input-wrap"><span class="input-prefix">$</span><input type="text" id="deal-${dealId}-renewed-arr" value="0" data-currency data-deal-id="${dealId}" data-deal-field="renewedArr"></div>
+        </div>
+        <div class="field">
+          <label class="field-label">CARR</label>
+          <div class="input-wrap"><span class="input-prefix">$</span><input type="text" id="deal-${dealId}-carr" value="0" data-currency data-deal-id="${dealId}" data-deal-field="carr"></div>
+        </div>
+        <div class="field">
+          <label class="field-label">NARR</label>
+          <div class="input-wrap"><span class="input-prefix">$</span><input type="text" id="deal-${dealId}-new-module-arr" data-currency data-deal-id="${dealId}" data-deal-field="newModuleArr"></div>
+        </div>
+        <div class="field toggle-field">
+          <label class="field-label" id="deal-${dealId}-new-logo-field-label">${TEAM_PRESETS[currentTeam] && TEAM_PRESETS[currentTeam].mspMode ? 'MSP NARR' : 'New Logo'}</label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="toggle" id="deal-${dealId}-new-logo-toggle" data-deal-id="${dealId}" data-deal-toggle="newLogo" role="switch" aria-checked="false" tabindex="0"></div>
+            <span class="toggle-label" id="deal-${dealId}-new-logo-label">No</span>
+          </div>
+        </div>
+        <div class="field toggle-field${myFieldCls}">
+          <label class="field-label">Multi-Year</label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="toggle${myDisabled}" id="deal-${dealId}-multi-year-toggle" data-deal-id="${dealId}" data-deal-toggle="multiYear" role="switch" aria-checked="false" tabindex="0"></div>
+            <span class="toggle-label" id="deal-${dealId}-multi-year-label">No</span>
+          </div>
+        </div>
+        ${l3Section}
+      </div>
+      <div class="deal-inline-results" id="deal-${dealId}-inline-results"></div>
+    </div>`;
+  }
+
+  function getDealInputs(dealId) {
+    return {
+      iarr: parseCurrency($('deal-' + dealId + '-iarr').value),
+      renewedArr: parseCurrency($('deal-' + dealId + '-renewed-arr').value),
+      carr: parseCurrency($('deal-' + dealId + '-carr').value),
+      newModuleArr: parseCurrency($('deal-' + dealId + '-new-module-arr').value),
+      newLogoDeal: $('deal-' + dealId + '-new-logo-toggle').classList.contains('active'),
+      multiYearDeal: !multiYearDisabled && $('deal-' + dealId + '-multi-year-toggle').classList.contains('active'),
+      dealInL3: dualMeasureActive ? $('deal-' + dealId + '-l3-region-toggle').classList.contains('active') : true
+    };
+  }
+
+  function addDeal(sourceValues) {
+    const dealId = nextDealId++;
+    const dealNumber = deals.length + 2; // Deal 1 is the base
+    const deal = { id: dealId, name: 'Deal ' + dealNumber };
+    deals.push(deal);
+
+    pipelineContainer.insertAdjacentHTML('beforeend', createDealBoxHtml(dealId, dealNumber));
+
+    if (sourceValues) {
+      setCurrencyDisplay($('deal-' + dealId + '-iarr'), sourceValues.iarr);
+      setCurrencyDisplay($('deal-' + dealId + '-renewed-arr'), sourceValues.renewedArr);
+      setCurrencyDisplay($('deal-' + dealId + '-carr'), sourceValues.carr);
+      setCurrencyDisplay($('deal-' + dealId + '-new-module-arr'), sourceValues.newModuleArr);
+      const nlToggle = $('deal-' + dealId + '-new-logo-toggle');
+      nlToggle.classList.toggle('active', sourceValues.newLogoDeal);
+      nlToggle.setAttribute('aria-checked', sourceValues.newLogoDeal);
+      $('deal-' + dealId + '-new-logo-label').textContent = sourceValues.newLogoDeal ? 'Yes' : 'No';
+      if (!multiYearDisabled) {
+        const myToggle = $('deal-' + dealId + '-multi-year-toggle');
+        myToggle.classList.toggle('active', sourceValues.multiYearDeal);
+        myToggle.setAttribute('aria-checked', sourceValues.multiYearDeal);
+        $('deal-' + dealId + '-multi-year-label').textContent = sourceValues.multiYearDeal ? 'Yes' : 'No';
+      }
+      if (dualMeasureActive && sourceValues.dealInL3 !== undefined) {
+        const l3Toggle = $('deal-' + dealId + '-l3-region-toggle');
+        l3Toggle.classList.toggle('active', sourceValues.dealInL3);
+        l3Toggle.setAttribute('aria-checked', sourceValues.dealInL3);
+        $('deal-' + dealId + '-l3-region-label').textContent = sourceValues.dealInL3 ? 'Yes' : 'No';
+      }
+      if (sourceValues.name) {
+        $('deal-' + dealId + '-name').value = sourceValues.name;
+      }
+    }
+
+    if (!pipelineMode) enterPipelineMode();
+    updatePipelineButtons();
+    recalculate();
+  }
+
+  function removeDeal(dealId) {
+    const idx = deals.findIndex(d => d.id === dealId);
+    if (idx === -1) return;
+    deals.splice(idx, 1);
+    const el = $('deal-box-' + dealId);
+    if (el) el.remove();
+    if (deals.length === 0) exitPipelineMode();
+    updateDealNumbers();
+    updatePipelineButtons();
+    recalculate();
+  }
+
+  function moveDeal(dealId, direction) {
+    const idx = deals.findIndex(d => d.id === dealId);
+    const newIdx = idx + direction;
+    if (newIdx < 0 || newIdx >= deals.length) return;
+    const temp = deals[idx];
+    deals[idx] = deals[newIdx];
+    deals[newIdx] = temp;
+    // Reorder DOM
+    const container = pipelineContainer;
+    const children = Array.from(container.querySelectorAll('.deal-box'));
+    children.sort((a, b) => {
+      const aIdx = deals.findIndex(d => d.id === parseInt(a.dataset.dealId));
+      const bIdx = deals.findIndex(d => d.id === parseInt(b.dataset.dealId));
+      return aIdx - bIdx;
+    });
+    children.forEach(child => container.appendChild(child));
+    updateDealNumbers();
+    updatePipelineButtons();
+    recalculate();
+  }
+
+  function duplicateDeal(dealId) {
+    const vals = getDealInputs(dealId);
+    const nameEl = $('deal-' + dealId + '-name');
+    vals.name = nameEl ? nameEl.value + ' (copy)' : undefined;
+    addDeal(vals);
+  }
+
+  function updateDealNumbers() {
+    deals.forEach((deal, idx) => {
+      const num = idx + 2;
+      const box = $('deal-box-' + deal.id);
+      if (!box) return;
+      box.querySelector('.deal-box-number').textContent = 'Deal ' + num;
+    });
+  }
+
+  function updatePipelineButtons() {
+    deals.forEach((deal, idx) => {
+      const box = $('deal-box-' + deal.id);
+      if (!box) return;
+      const upBtn = box.querySelector('.deal-box-move-up');
+      const downBtn = box.querySelector('.deal-box-move-down');
+      if (upBtn) upBtn.disabled = (idx === 0);
+      if (downBtn) downBtn.disabled = (idx === deals.length - 1);
+    });
+    btnClearPipeline.classList.toggle('field-hidden', deals.length === 0);
+  }
+
+  function enterPipelineMode() {
+    pipelineMode = true;
+    btnCompare.classList.add('field-hidden');
+    if (dealASection) {
+      dealASection.querySelector('.section-title').textContent = 'Deal 1';
+    }
+    document.querySelector('.results-title').textContent = 'Pipeline Breakdown';
+    recalculate();
+  }
+
+  function exitPipelineMode() {
+    pipelineMode = false;
+    btnCompare.classList.remove('field-hidden');
+    if (dealASection) {
+      dealASection.querySelector('.section-title').textContent = 'Deal Details';
+    }
+    document.querySelector('.results-title').textContent = 'Commission Breakdown';
+    btnClearPipeline.classList.add('field-hidden');
+    recalculate();
+  }
+
+  function clearAllDeals() {
+    deals.forEach(deal => {
+      const el = $('deal-box-' + deal.id);
+      if (el) el.remove();
+    });
+    deals = [];
+    nextDealId = 2;
+    exitPipelineMode();
+    // Reset Deal 1 inputs
+    setCurrencyDisplay(fields.iarr, 0);
+    setCurrencyDisplay(fields.renewedArr, 0);
+    setCurrencyDisplay(fields.carr, 0);
+    fields.newModuleArr.value = '';
+    newLogoToggle.classList.remove('active');
+    newLogoToggle.setAttribute('aria-checked', 'false');
+    newLogoLabel.textContent = 'No';
+    multiYearToggle.classList.remove('active');
+    multiYearToggle.setAttribute('aria-checked', 'false');
+    multiYearLabel.textContent = 'No';
+    if (l3RegionToggle) {
+      l3RegionToggle.classList.add('active');
+      l3RegionToggle.setAttribute('aria-checked', 'true');
+      l3RegionLabel.textContent = 'Yes';
+    }
+    recalculate();
+  }
+
+  function renderDealInlineResults(dealId, result, preAtt, postAtt) {
+    const el = $('deal-' + dealId + '-inline-results');
+    if (!el) return;
+    const narrRet = result.narrQuotaRetirement;
+    const comm = result.totalCommission;
+    el.innerHTML = `<span class="deal-inline-stat"><span class="deal-inline-label">NARR Retired:</span><span class="deal-inline-value">${formatDollars(narrRet)}</span></span>`
+      + `<span class="deal-inline-stat"><span class="deal-inline-label">Commission:</span><span class="deal-inline-value positive">${formatDollars(comm)}</span></span>`
+      + `<span class="deal-inline-stat"><span class="deal-inline-label">Attainment:</span><span class="deal-inline-value">${(preAtt * 100).toFixed(2)}% → ${(postAtt * 100).toFixed(2)}%</span></span>`;
+    el.classList.add('has-results');
+  }
+
+  function recalculatePipeline() {
+    const baseInputs = getInputs();
+    if (!baseInputs.ote || (baseInputs.dualMeasure ? (!baseInputs.l3NarrQuota && !baseInputs.l2NarrQuota) : !baseInputs.narrQuota)) {
+      resultsEl.innerHTML = '<div class="results-empty">Enter OTE, NARR Quota, and deal details to see results.</div>';
+      updateActionButtons();
+      return;
+    }
+
+    // Update derived profile fields (salary, OTV, PCR display)
+    if (baseInputs.dualMeasure) {
+      const rProfile = calculateDualMeasureCompensation(baseInputs);
+      setCurrencyDisplay(fields.salary, rProfile.salary);
+      setCurrencyDisplay(fields.otv, rProfile.otv);
+      fields.l3Pcr.value = baseInputs.l3NarrQuota > 0 ? formatRateAsPercent(rProfile.l3Pcr) : '';
+      fields.l2Pcr.value = baseInputs.l2NarrQuota > 0 ? formatRateAsPercent(rProfile.l2Pcr) : '';
+      fields.l3Attainment.value = baseInputs.l3NarrQuota > 0 ? (baseInputs.l3NarrQuotaCredit / baseInputs.l3NarrQuota * 100).toFixed(2) : '';
+      fields.l2Attainment.value = baseInputs.l2NarrQuota > 0 ? (baseInputs.l2NarrQuotaCredit / baseInputs.l2NarrQuota * 100).toFixed(2) : '';
+    } else {
+      const rProfile = calculateCompensation(baseInputs);
+      setCurrencyDisplay(fields.salary, rProfile.salary);
+      setCurrencyDisplay(fields.otv, rProfile.otv);
+      fields.pcr.value = baseInputs.narrQuota > 0 ? formatRateAsPercent(rProfile.pcr) : '';
+      fields.narrAttainment.value = baseInputs.narrQuota > 0 ? (rProfile.narrQuotaAttainment * 100).toFixed(2) : '';
+    }
+
+    const allResults = [];
+    const narrQuota = baseInputs.dualMeasure ? 0 : baseInputs.narrQuota;
+    const l3Quota = baseInputs.dualMeasure ? baseInputs.l3NarrQuota : 0;
+    const l2Quota = baseInputs.dualMeasure ? baseInputs.l2NarrQuota : 0;
+
+    let runningCredit = baseInputs.dualMeasure ? 0 : baseInputs.narrQuotaCredit;
+    let runningL3Credit = baseInputs.dualMeasure ? baseInputs.l3NarrQuotaCredit : 0;
+    let runningL2Credit = baseInputs.dualMeasure ? baseInputs.l2NarrQuotaCredit : 0;
+
+    // Build list of all deals: Deal 1 (base) + dynamic deals
+    const allDeals = [{ id: 0, name: 'Deal 1', isBase: true }].concat(deals);
+
+    for (let i = 0; i < allDeals.length; i++) {
+      const d = allDeals[i];
+      let dealInputOverrides;
+
+      if (d.isBase) {
+        dealInputOverrides = {};
+      } else {
+        dealInputOverrides = getDealInputs(d.id);
+      }
+
+      let inputs, result, preAtt, postAtt;
+
+      if (baseInputs.dualMeasure) {
+        inputs = Object.assign({}, baseInputs, dealInputOverrides, {
+          l3NarrQuotaCredit: runningL3Credit,
+          l2NarrQuotaCredit: runningL2Credit
+        });
+        result = calculateDualMeasureCompensation(inputs);
+        preAtt = l3Quota > 0 ? runningL3Credit / l3Quota : (l2Quota > 0 ? runningL2Credit / l2Quota : 0);
+        const newL3 = runningL3Credit + result.narrQuotaRetirement;
+        const newL2 = runningL2Credit + result.narrQuotaRetirement;
+        postAtt = l3Quota > 0 ? newL3 / l3Quota : (l2Quota > 0 ? newL2 / l2Quota : 0);
+        runningL3Credit += result.narrQuotaRetirement;
+        runningL2Credit += result.narrQuotaRetirement;
+      } else {
+        inputs = Object.assign({}, baseInputs, dealInputOverrides, { narrQuotaCredit: runningCredit });
+        result = calculateCompensation(inputs);
+        preAtt = narrQuota > 0 ? runningCredit / narrQuota : 0;
+        postAtt = narrQuota > 0 ? (runningCredit + result.narrQuotaRetirement) / narrQuota : 0;
+        runningCredit += result.narrQuotaRetirement;
+      }
+
+      const nameEl = d.isBase ? null : $('deal-' + d.id + '-name');
+      const name = d.isBase ? getDeal1Name() : (nameEl ? nameEl.value || ('Deal ' + (i + 1)) : ('Deal ' + (i + 1)));
+
+      allResults.push({ deal: d, name: name, inputs: inputs, result: result, preAtt: preAtt, postAtt: postAtt, dealNumber: i + 1 });
+
+      // Render inline results for dynamic deals
+      if (!d.isBase) {
+        renderDealInlineResults(d.id, result, preAtt, postAtt);
+      }
+    }
+
+    renderPipelineResults(allResults, baseInputs);
+  }
+
+  function getDeal1Name() {
+    if (dealASection) {
+      const title = dealASection.querySelector('.section-title');
+      return title ? title.textContent : 'Deal 1';
+    }
+    return 'Deal 1';
+  }
+
+  function buildRateLabelForResult(r, inputs) {
+    const parts = ['PCR'];
+    if (inputs.newLogoDeal) parts.push(TEAM_PRESETS[currentTeam] && TEAM_PRESETS[currentTeam].mspMode ? 'MSP NARR' : 'New Logo');
+    if (inputs.multiYearDeal) parts.push('Multi-Year');
+    return parts.join(' + ');
+  }
+
+  function renderPipelineResults(allResults, baseInputs) {
+    let html = '';
+    const quota = baseInputs.dualMeasure ? baseInputs.l3NarrQuota : baseInputs.narrQuota;
+
+    // Cumulative attainment bar
+    const segments = buildPipelineSegments(allResults, baseInputs);
+    html += buildDealAttainmentBar({ segments: segments, title: baseInputs.dualMeasure ? currentPrimaryLabel + ' Pipeline Attainment' : 'Pipeline Attainment' });
+
+    if (baseInputs.dualMeasure) {
+      const l2Segments = buildPipelineSegmentsL2(allResults, baseInputs);
+      html += buildDealAttainmentBar({ segments: l2Segments, title: currentSecondaryLabel + ' Pipeline Attainment' });
+    }
+
+    // Pipeline summary table
+    let totalNarr = 0, totalComm = 0;
+    html += `<div class="result-group"><div class="result-group-title">Pipeline Summary</div>`;
+    html += `<table class="pipeline-summary-table"><thead><tr><th>#</th><th>Deal</th><th>NARR Retired</th><th>Commission</th><th>Attainment</th></tr></thead><tbody>`;
+    for (const dr of allResults) {
+      const r = dr.result;
+      const crossesThreshold = dr.preAtt < 1.0 && dr.postAtt > 1.0;
+      const rowCls = crossesThreshold ? ' class="pipeline-accel-row"' : '';
+      html += `<tr${rowCls}>`;
+      html += `<td>${dr.dealNumber}</td>`;
+      html += `<td>${dr.name}</td>`;
+      html += `<td>${formatDollars(r.narrQuotaRetirement)}</td>`;
+      html += `<td>${formatDollars(r.totalCommission)}</td>`;
+      html += `<td>${(dr.preAtt * 100).toFixed(2)}% → ${(dr.postAtt * 100).toFixed(2)}%</td>`;
+      html += `</tr>`;
+      totalNarr += r.narrQuotaRetirement;
+      totalComm += r.totalCommission;
+    }
+
+    const startAtt = allResults[0].preAtt;
+    const endAtt = allResults[allResults.length - 1].postAtt;
+    html += `<tr class="pipeline-total-row"><td></td><td>Total</td><td>${formatDollars(totalNarr)}</td><td>${formatDollars(totalComm)}</td><td>${(startAtt * 100).toFixed(2)}% → ${(endAtt * 100).toFixed(2)}%</td></tr>`;
+    html += `</tbody></table></div>`;
+
+    // Per-deal detailed breakdown (collapsed by default for multi-deal)
+    if (allResults.length <= 3) {
+      for (const dr of allResults) {
+        html += `<div class="result-group"><div class="result-group-title">${dr.name} — Detail</div>`;
+        if (baseInputs.dualMeasure) {
+          html += buildDualMeasureHtml(dr.result, dr.inputs);
+        } else {
+          html += buildSingleMeasureHtml(dr.result, dr.inputs);
+        }
+        html += `</div>`;
+      }
+    }
+
+    // OTV impact
+    const otv = baseInputs.ote * 0.20;
+    if (totalComm > 0 && otv > 0) {
+      html += `<div class="result-group"><div class="result-group-title">Pipeline OTV Impact</div>`;
+      html += resultRow('Total Pipeline Commission', formatDollars(totalComm), 'positive', true);
+      html += resultRow('OTV Attainment from Pipeline', formatPercent(totalComm / otv));
+      html += `</div>`;
+    }
+
+    resultsEl.innerHTML = html;
+    updateActionButtons();
+  }
+
+  function buildPipelineSegments(allResults, baseInputs) {
+    const segments = [];
+    const startAtt = allResults[0].preAtt * 100;
+    if (startAtt > 0) {
+      segments.push({ startPct: 0, endPct: startAtt, color: 'var(--bar-pre-deal)', label: 'Pre-pipeline (' + startAtt.toFixed(1) + '%)' });
+    }
+    for (let i = 0; i < allResults.length; i++) {
+      const dr = allResults[i];
+      const pre = dr.preAtt * 100;
+      const post = dr.postAtt * 100;
+      if (post <= pre) continue;
+      const color = DEAL_COLORS[i % DEAL_COLORS.length];
+      if (pre >= 100) {
+        segments.push({ startPct: pre, endPct: post, color: color, label: dr.name });
+      } else if (post <= 100) {
+        segments.push({ startPct: pre, endPct: post, color: color, label: dr.name });
+      } else {
+        segments.push({ startPct: pre, endPct: 100, color: color, label: dr.name + ' (base)' });
+        segments.push({ startPct: 100, endPct: post, color: color, label: dr.name + ' (accel)' });
+      }
+    }
+    return segments;
+  }
+
+  function buildPipelineSegmentsL2(allResults, baseInputs) {
+    const segments = [];
+    const l2Quota = baseInputs.l2NarrQuota;
+    if (!l2Quota) return segments;
+    let running = baseInputs.l2NarrQuotaCredit;
+    const startPct = (running / l2Quota) * 100;
+    if (startPct > 0) {
+      segments.push({ startPct: 0, endPct: startPct, color: 'var(--bar-pre-deal)', label: 'Pre-pipeline (' + startPct.toFixed(1) + '%)' });
+    }
+    for (let i = 0; i < allResults.length; i++) {
+      const r = allResults[i].result;
+      const pre = (running / l2Quota) * 100;
+      const post = ((running + r.narrQuotaRetirement) / l2Quota) * 100;
+      running += r.narrQuotaRetirement;
+      if (post <= pre) continue;
+      const color = DEAL_COLORS[i % DEAL_COLORS.length];
+      if (pre >= 100) {
+        segments.push({ startPct: pre, endPct: post, color: color, label: allResults[i].name });
+      } else if (post <= 100) {
+        segments.push({ startPct: pre, endPct: post, color: color, label: allResults[i].name });
+      } else {
+        segments.push({ startPct: pre, endPct: 100, color: color, label: allResults[i].name + ' (base)' });
+        segments.push({ startPct: 100, endPct: post, color: color, label: allResults[i].name + ' (accel)' });
+      }
+    }
+    return segments;
+  }
+
+  // Pipeline export functions
+  function getPipelineData(exportOpts) {
+    const baseInputs = getInputs();
+    const narrQuota = baseInputs.dualMeasure ? 0 : baseInputs.narrQuota;
+    const l3Quota = baseInputs.dualMeasure ? baseInputs.l3NarrQuota : 0;
+    const l2Quota = baseInputs.dualMeasure ? baseInputs.l2NarrQuota : 0;
+    let runningCredit = baseInputs.dualMeasure ? 0 : baseInputs.narrQuotaCredit;
+    let runningL3Credit = baseInputs.dualMeasure ? baseInputs.l3NarrQuotaCredit : 0;
+    let runningL2Credit = baseInputs.dualMeasure ? baseInputs.l2NarrQuotaCredit : 0;
+
+    const allDeals = [{ id: 0, name: 'Deal 1', isBase: true }].concat(deals);
+    const results = [];
+
+    for (let i = 0; i < allDeals.length; i++) {
+      const d = allDeals[i];
+      const overrides = d.isBase ? {} : getDealInputs(d.id);
+      let inputs, result, preAtt, postAtt;
+
+      if (baseInputs.dualMeasure) {
+        inputs = Object.assign({}, baseInputs, overrides, { l3NarrQuotaCredit: runningL3Credit, l2NarrQuotaCredit: runningL2Credit });
+        result = calculateDualMeasureCompensation(inputs);
+        preAtt = l3Quota > 0 ? runningL3Credit / l3Quota : 0;
+        postAtt = l3Quota > 0 ? (runningL3Credit + result.narrQuotaRetirement) / l3Quota : 0;
+        runningL3Credit += result.narrQuotaRetirement;
+        runningL2Credit += result.narrQuotaRetirement;
+      } else {
+        inputs = Object.assign({}, baseInputs, overrides, { narrQuotaCredit: runningCredit });
+        result = calculateCompensation(inputs);
+        preAtt = narrQuota > 0 ? runningCredit / narrQuota : 0;
+        postAtt = narrQuota > 0 ? (runningCredit + result.narrQuotaRetirement) / narrQuota : 0;
+        runningCredit += result.narrQuotaRetirement;
+      }
+
+      const nameEl = d.isBase ? null : $('deal-' + d.id + '-name');
+      const name = d.isBase ? 'Deal 1' : (nameEl ? nameEl.value || ('Deal ' + (i + 1)) : ('Deal ' + (i + 1)));
+      results.push({ name, inputs, result, preAtt, postAtt });
+    }
+
+    return { baseInputs, results, exportOpts };
+  }
+
+  function formatPipelinePlainText(exportOpts) {
+    const { baseInputs, results } = getPipelineData(exportOpts);
+    const obfuscate = exportOpts.obfuscate;
+    const h = '[hidden]';
+    let lines = [];
+    lines.push('Pre-Sales Compensation Calculator — Pipeline');
+    lines.push('Team: ' + exportOpts.teamLabel);
+    lines.push('Date: ' + new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }));
+    lines.push('');
+
+    // Profile
+    lines.push('--- User Profile ---');
+    lines.push('OTE: ' + (obfuscate ? h : formatDollars(baseInputs.ote)));
+    lines.push('Salary: ' + (obfuscate ? h : formatDollars(baseInputs.ote * 0.80)));
+    lines.push('OTV: ' + (obfuscate ? h : formatDollars(baseInputs.ote * 0.20)));
+    if (baseInputs.dualMeasure) {
+      lines.push(currentPrimaryLabel + ' NARR Quota: ' + (obfuscate ? h : formatDollars(baseInputs.l3NarrQuota)));
+      lines.push(currentSecondaryLabel + ' NARR Quota: ' + (obfuscate ? h : formatDollars(baseInputs.l2NarrQuota)));
+    } else {
+      lines.push('NARR Quota: ' + (obfuscate ? h : formatDollars(baseInputs.narrQuota)));
+      lines.push('Starting Quota Credit: ' + formatDollars(baseInputs.narrQuotaCredit));
+    }
+    lines.push('');
+
+    // Per-deal
+    let totalNarr = 0, totalComm = 0;
+    for (let i = 0; i < results.length; i++) {
+      const dr = results[i];
+      const r = dr.result;
+      lines.push('--- ' + dr.name + ' ---');
+      lines.push('  IARR: ' + formatDollars(dr.inputs.iarr) + '  |  Renewed ARR: ' + formatDollars(dr.inputs.renewedArr) + '  |  NARR: ' + formatDollars(dr.inputs.newModuleArr));
+      lines.push('  New Logo: ' + (dr.inputs.newLogoDeal ? 'Yes' : 'No') + '  |  Multi-Year: ' + (dr.inputs.multiYearDeal ? 'Yes' : 'No'));
+      lines.push('  NARR Retired: ' + formatDollars(r.narrQuotaRetirement) + '  |  Commission: ' + formatDollars(r.totalCommission));
+      lines.push('  Attainment: ' + (obfuscate ? h : (dr.preAtt * 100).toFixed(2) + '% → ' + (dr.postAtt * 100).toFixed(2) + '%'));
+      lines.push('');
+      totalNarr += r.narrQuotaRetirement;
+      totalComm += r.totalCommission;
+    }
+
+    lines.push('--- Pipeline Totals ---');
+    lines.push('Total NARR Retired: ' + formatDollars(totalNarr));
+    lines.push('Total Commission: ' + formatDollars(totalComm));
+    const startAtt = results[0].preAtt;
+    const endAtt = results[results.length - 1].postAtt;
+    lines.push('Starting Attainment: ' + (obfuscate ? h : (startAtt * 100).toFixed(2) + '%'));
+    lines.push('Ending Attainment: ' + (obfuscate ? h : (endAtt * 100).toFixed(2) + '%'));
+    lines.push('Deals: ' + results.length);
+
+    return lines.join('\n');
+  }
+
+  function buildPipelinePdfHtml(exportOpts) {
+    const { baseInputs, results } = getPipelineData(exportOpts);
+    const obfuscate = exportOpts.obfuscate;
+    const h = '[hidden]';
+
+    let profileRows = '';
+    profileRows += buildPdfRow('OTE', obfuscate ? h : formatDollars(baseInputs.ote));
+    profileRows += buildPdfRow('Salary', obfuscate ? h : formatDollars(baseInputs.ote * 0.80));
+    profileRows += buildPdfRow('OTV', obfuscate ? h : formatDollars(baseInputs.ote * 0.20));
+    if (baseInputs.dualMeasure) {
+      profileRows += buildPdfRow(currentPrimaryLabel + ' NARR Quota', obfuscate ? h : formatDollars(baseInputs.l3NarrQuota));
+      profileRows += buildPdfRow(currentSecondaryLabel + ' NARR Quota', obfuscate ? h : formatDollars(baseInputs.l2NarrQuota));
+    } else {
+      profileRows += buildPdfRow('NARR Quota', obfuscate ? h : formatDollars(baseInputs.narrQuota));
+      profileRows += buildPdfRow('Starting Quota Credit', formatDollars(baseInputs.narrQuotaCredit));
+    }
+
+    let dealSections = '';
+    let totalNarr = 0, totalComm = 0;
+    for (const dr of results) {
+      const r = dr.result;
+      let rows = '';
+      rows += buildPdfRow('IARR', formatDollars(dr.inputs.iarr));
+      rows += buildPdfRow('Renewed ARR', formatDollars(dr.inputs.renewedArr));
+      rows += buildPdfRow('NARR', formatDollars(dr.inputs.newModuleArr));
+      rows += buildPdfRow('New Logo', dr.inputs.newLogoDeal ? 'Yes' : 'No');
+      rows += buildPdfRow('Multi-Year', dr.inputs.multiYearDeal ? 'Yes' : 'No');
+      rows += buildPdfRow('NARR Retired', formatDollars(r.narrQuotaRetirement));
+      rows += buildPdfRow('Commission', formatDollars(r.totalCommission));
+      rows += buildPdfRow('Attainment', obfuscate ? h : (dr.preAtt * 100).toFixed(2) + '% → ' + (dr.postAtt * 100).toFixed(2) + '%');
+      dealSections += buildPdfSection(dr.name, rows);
+      totalNarr += r.narrQuotaRetirement;
+      totalComm += r.totalCommission;
+    }
+
+    const startAtt = results[0].preAtt;
+    const endAtt = results[results.length - 1].postAtt;
+    let totalRows = '';
+    totalRows += buildPdfRow('Total NARR Retired', formatDollars(totalNarr));
+    totalRows += buildPdfRow('Total Commission', formatDollars(totalComm));
+    totalRows += buildPdfRow('Starting Attainment', obfuscate ? h : (startAtt * 100).toFixed(2) + '%');
+    totalRows += buildPdfRow('Ending Attainment', obfuscate ? h : (endAtt * 100).toFixed(2) + '%');
+    totalRows += buildPdfRow('Deals', '' + results.length);
+
+    return '<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;background:#0c0f24;color:#e8e8f0;padding:30px 40px;font-size:12px;margin:0">'
+      + '<div style="border-bottom:2px solid #751323;padding-bottom:10px;margin-bottom:16px">'
+      + '<div style="font-size:16px;font-weight:700;color:#e8e8f0">Pipeline Breakdown</div>'
+      + '<div style="font-size:11px;color:#a0a8c8;margin-top:2px">Team: ' + exportOpts.teamLabel + '  |  ' + new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) + '</div>'
+      + '</div>'
+      + buildPdfSection('User Profile', profileRows)
+      + dealSections
+      + buildPdfSection('Pipeline Totals', totalRows)
+      + '<div style="margin-top:20px;padding-top:8px;border-top:1px solid #2a3368;font-size:9px;color:#6070a0;text-align:center">Generated by Pre-Sales Compensation Calculator' + (appVersion ? ' v' + appVersion : '') + '</div>'
+      + '</body></html>';
   }
 
   function buildAnnualMeasureBreakdown(measureResult, label, sublabel) {
@@ -1748,10 +2441,12 @@
 
   // Compare mode toggle
   btnCompare.addEventListener('click', function () {
+    if (pipelineMode) return;
     comparisonMode = !comparisonMode;
     this.classList.toggle('active', comparisonMode);
     this.textContent = comparisonMode ? 'Exit Compare' : 'Compare Deals';
     dealBSection.classList.toggle('field-hidden', !comparisonMode);
+    $('pipeline-actions').classList.toggle('field-hidden', comparisonMode);
 
     // Relabel Deal A section
     if (dealASection) {
@@ -1772,6 +2467,28 @@
       const scenario = SCENARIOS[this.dataset.scenario];
       if (!scenario) return;
       const v = scenario.values;
+
+      // In pipeline mode, populate the last dynamic deal if any
+      if (pipelineMode && deals.length > 0) {
+        const lastDeal = deals[deals.length - 1];
+        const id = lastDeal.id;
+        setCurrencyDisplay($('deal-' + id + '-iarr'), v.iarr);
+        setCurrencyDisplay($('deal-' + id + '-renewed-arr'), v.renewedArr);
+        setCurrencyDisplay($('deal-' + id + '-carr'), v.carr);
+        setCurrencyDisplay($('deal-' + id + '-new-module-arr'), v.newModuleArr);
+        const nlToggle = $('deal-' + id + '-new-logo-toggle');
+        nlToggle.classList.toggle('active', v.newLogoDeal);
+        nlToggle.setAttribute('aria-checked', v.newLogoDeal);
+        $('deal-' + id + '-new-logo-label').textContent = v.newLogoDeal ? 'Yes' : 'No';
+        if (!multiYearDisabled) {
+          const myToggle = $('deal-' + id + '-multi-year-toggle');
+          myToggle.classList.toggle('active', v.multiYearDeal);
+          myToggle.setAttribute('aria-checked', v.multiYearDeal);
+          $('deal-' + id + '-multi-year-label').textContent = v.multiYearDeal ? 'Yes' : 'No';
+        }
+        recalculate();
+        return;
+      }
 
       if (!dualMeasureActive) {
         setCurrencyDisplay(fields.ote, v.ote);
@@ -1809,11 +2526,22 @@
     rarrRateField.classList.add('field-hidden');
     psaPendingNote.classList.add('field-hidden');
 
+    // Exit pipeline mode
+    if (pipelineMode) {
+      deals.forEach(function (deal) { var el = $('deal-box-' + deal.id); if (el) el.remove(); });
+      deals = [];
+      nextDealId = 2;
+      pipelineMode = false;
+      btnCompare.classList.remove('field-hidden');
+      btnClearPipeline.classList.add('field-hidden');
+    }
+
     // Exit comparison mode
     comparisonMode = false;
     btnCompare.classList.remove('active');
     btnCompare.textContent = 'Compare Deals';
     dealBSection.classList.add('field-hidden');
+    $('pipeline-actions').classList.remove('field-hidden');
     if (dealASection) {
       dealASection.querySelector('.section-title').textContent = 'Deal Details';
     }
@@ -2168,6 +2896,8 @@
     let text;
     if (annualMode) {
       text = formatAnnualPlainText(exportOpts);
+    } else if (pipelineMode) {
+      text = formatPipelinePlainText(exportOpts);
     } else if (comparisonMode) {
       text = formatComparisonPlainText(exportOpts);
     } else {
@@ -2197,9 +2927,13 @@
       secondaryLabel: currentSecondaryLabel,
       obfuscate: obfuscateToggle.checked
     };
-    let html;
+    let html, prefix;
     if (annualMode) {
       html = buildAnnualPdfHtml(exportOpts);
+      prefix = 'Annual-Projection';
+    } else if (pipelineMode) {
+      html = buildPipelinePdfHtml(exportOpts);
+      prefix = 'Pipeline-Breakdown';
     } else if (comparisonMode) {
       html = buildComparisonPdfHtml(exportOpts);
     } else {
@@ -2211,7 +2945,7 @@
       html = buildPdfHtml(data, { appVersion: appVersion });
     }
     if (window.pdfExport) {
-      await window.pdfExport.generate(html, annualMode ? 'Annual-Projection' : undefined);
+      await window.pdfExport.generate(html, prefix);
     }
   });
 
@@ -2263,6 +2997,17 @@
       // Exit comparison mode when switching to annual
       if (annualMode && comparisonMode) {
         btnCompare.click();
+      }
+
+      // Exit pipeline mode when switching to annual
+      if (annualMode && pipelineMode) {
+        deals.forEach(function (deal) { var el = $('deal-box-' + deal.id); if (el) el.remove(); });
+        deals = [];
+        nextDealId = 2;
+        pipelineMode = false;
+        btnCompare.classList.remove('field-hidden');
+        btnClearPipeline.classList.add('field-hidden');
+        if (dealASection) dealASection.querySelector('.section-title').textContent = 'Deal Details';
       }
 
       // Show/hide RARR field for annual mode
@@ -2321,6 +3066,58 @@
       if (annualMode) recalculate();
     });
   }
+
+  // Pipeline: Add Deal button
+  btnAddDeal.addEventListener('click', function () {
+    addDeal();
+  });
+
+  // Pipeline: Clear All button
+  btnClearPipeline.addEventListener('click', function () {
+    clearAllDeals();
+  });
+
+  // Pipeline: Event delegation on container
+  pipelineContainer.addEventListener('click', function (e) {
+    const btn = e.target.closest('[data-deal-id]');
+    if (!btn) return;
+    const dealId = parseInt(btn.dataset.dealId);
+
+    if (btn.classList.contains('deal-box-remove')) {
+      removeDeal(dealId);
+    } else if (btn.classList.contains('deal-box-move-up')) {
+      moveDeal(dealId, -1);
+    } else if (btn.classList.contains('deal-box-move-down')) {
+      moveDeal(dealId, 1);
+    } else if (btn.classList.contains('deal-box-duplicate')) {
+      duplicateDeal(dealId);
+    } else if (btn.dataset.dealToggle) {
+      if (btn.classList.contains('disabled')) return;
+      const active = !btn.classList.contains('active');
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-checked', active);
+      const labelEl = btn.nextElementSibling;
+      if (labelEl) labelEl.textContent = active ? 'Yes' : 'No';
+      recalculate();
+    }
+  });
+
+  pipelineContainer.addEventListener('input', function (e) {
+    const input = e.target;
+    if (!input.dataset.dealId) return;
+    if (input.hasAttribute('data-currency')) {
+      handleCurrencyInput(e);
+    } else {
+      recalculate();
+    }
+  });
+
+  pipelineContainer.addEventListener('keydown', function (e) {
+    if (e.target.dataset.dealToggle && (e.key === ' ' || e.key === 'Enter')) {
+      e.preventDefault();
+      e.target.click();
+    }
+  });
 
   loadSettings();
 })();
