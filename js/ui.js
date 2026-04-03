@@ -1287,14 +1287,21 @@
     recalculate();
   }
 
-  function renderDealInlineResults(dealId, result, preAtt, postAtt) {
+  function renderDealInlineResults(dealId, result, preAtt, postAtt, dualAtt) {
     const el = $('deal-' + dealId + '-inline-results');
     if (!el) return;
     const narrRet = result.narrQuotaRetirement;
     const comm = result.totalCommission;
+    let attHtml;
+    if (dualAtt) {
+      attHtml = `<span class="deal-inline-stat"><span class="deal-inline-label">${currentPrimaryLabel} Att:</span><span class="deal-inline-value">${(dualAtt.preL3Att * 100).toFixed(2)}% → ${(dualAtt.postL3Att * 100).toFixed(2)}%</span></span>`
+        + `<span class="deal-inline-stat"><span class="deal-inline-label">${currentSecondaryLabel} Att:</span><span class="deal-inline-value">${(dualAtt.preL2Att * 100).toFixed(2)}% → ${(dualAtt.postL2Att * 100).toFixed(2)}%</span></span>`;
+    } else {
+      attHtml = `<span class="deal-inline-stat"><span class="deal-inline-label">Attainment:</span><span class="deal-inline-value">${(preAtt * 100).toFixed(2)}% → ${(postAtt * 100).toFixed(2)}%</span></span>`;
+    }
     el.innerHTML = `<span class="deal-inline-stat"><span class="deal-inline-label">NARR Retired:</span><span class="deal-inline-value">${formatDollars(narrRet)}</span></span>`
       + `<span class="deal-inline-stat"><span class="deal-inline-label">Commission:</span><span class="deal-inline-value positive">${formatDollars(comm)}</span></span>`
-      + `<span class="deal-inline-stat"><span class="deal-inline-label">Attainment:</span><span class="deal-inline-value">${(preAtt * 100).toFixed(2)}% → ${(postAtt * 100).toFixed(2)}%</span></span>`;
+      + attHtml;
     el.classList.add('has-results');
   }
 
@@ -1345,7 +1352,7 @@
         dealInputOverrides = getDealInputs(d.id);
       }
 
-      let inputs, result, preAtt, postAtt;
+      let inputs, result, preAtt, postAtt, preL3Att, postL3Att, preL2Att, postL2Att;
 
       if (baseInputs.dualMeasure) {
         inputs = Object.assign({}, baseInputs, dealInputOverrides, {
@@ -1353,10 +1360,14 @@
           l2NarrQuotaCredit: runningL2Credit
         });
         result = calculateDualMeasureCompensation(inputs);
-        preAtt = l3Quota > 0 ? runningL3Credit / l3Quota : (l2Quota > 0 ? runningL2Credit / l2Quota : 0);
+        preL3Att = l3Quota > 0 ? runningL3Credit / l3Quota : 0;
+        preL2Att = l2Quota > 0 ? runningL2Credit / l2Quota : 0;
         const newL3 = runningL3Credit + result.narrQuotaRetirement;
         const newL2 = runningL2Credit + result.narrQuotaRetirement;
-        postAtt = l3Quota > 0 ? newL3 / l3Quota : (l2Quota > 0 ? newL2 / l2Quota : 0);
+        postL3Att = l3Quota > 0 ? newL3 / l3Quota : 0;
+        postL2Att = l2Quota > 0 ? newL2 / l2Quota : 0;
+        preAtt = preL3Att || preL2Att;
+        postAtt = postL3Att || postL2Att;
         runningL3Credit += result.narrQuotaRetirement;
         runningL2Credit += result.narrQuotaRetirement;
       } else {
@@ -1370,11 +1381,18 @@
       const nameEl = d.isBase ? null : $('deal-' + d.id + '-name');
       const name = d.isBase ? getDeal1Name() : (nameEl ? nameEl.value || ('Deal ' + (i + 1)) : ('Deal ' + (i + 1)));
 
-      allResults.push({ deal: d, name: name, inputs: inputs, result: result, preAtt: preAtt, postAtt: postAtt, dealNumber: i + 1 });
+      const entry = { deal: d, name: name, inputs: inputs, result: result, preAtt: preAtt, postAtt: postAtt, dealNumber: i + 1 };
+      if (baseInputs.dualMeasure) {
+        entry.preL3Att = preL3Att;
+        entry.postL3Att = postL3Att;
+        entry.preL2Att = preL2Att;
+        entry.postL2Att = postL2Att;
+      }
+      allResults.push(entry);
 
       // Render inline results for dynamic deals
       if (!d.isBase) {
-        renderDealInlineResults(d.id, result, preAtt, postAtt);
+        renderDealInlineResults(d.id, result, preAtt, postAtt, baseInputs.dualMeasure ? { preL3Att, postL3Att, preL2Att, postL2Att } : null);
       }
     }
 
@@ -1409,26 +1427,40 @@
 
     // Pipeline summary table
     let totalNarr = 0, totalComm = 0;
+    const isDual = baseInputs.dualMeasure;
     html += `<div class="result-group"><div class="result-group-title">Pipeline Summary</div>`;
-    html += `<table class="pipeline-summary-table"><thead><tr><th>#</th><th>Deal</th><th>NARR Retired</th><th>Commission</th><th>Attainment</th></tr></thead><tbody>`;
+    if (isDual) {
+      html += `<table class="pipeline-summary-table"><thead><tr><th>#</th><th>Deal</th><th>NARR Retired</th><th>Commission</th><th>${currentPrimaryLabel} Att</th><th>${currentSecondaryLabel} Att</th></tr></thead><tbody>`;
+    } else {
+      html += `<table class="pipeline-summary-table"><thead><tr><th>#</th><th>Deal</th><th>NARR Retired</th><th>Commission</th><th>Attainment</th></tr></thead><tbody>`;
+    }
     for (const dr of allResults) {
       const r = dr.result;
-      const crossesThreshold = dr.preAtt < 1.0 && dr.postAtt > 1.0;
+      const crossesL3 = isDual ? (dr.preL3Att < 1.0 && dr.postL3Att > 1.0) : false;
+      const crossesThreshold = isDual ? crossesL3 : (dr.preAtt < 1.0 && dr.postAtt > 1.0);
       const rowCls = crossesThreshold ? ' class="pipeline-accel-row"' : '';
       html += `<tr${rowCls}>`;
       html += `<td>${dr.dealNumber}</td>`;
       html += `<td>${dr.name}</td>`;
       html += `<td>${formatDollars(r.narrQuotaRetirement)}</td>`;
       html += `<td>${formatDollars(r.totalCommission)}</td>`;
-      html += `<td>${(dr.preAtt * 100).toFixed(2)}% → ${(dr.postAtt * 100).toFixed(2)}%</td>`;
+      if (isDual) {
+        html += `<td>${(dr.preL3Att * 100).toFixed(2)}% → ${(dr.postL3Att * 100).toFixed(2)}%</td>`;
+        html += `<td>${(dr.preL2Att * 100).toFixed(2)}% → ${(dr.postL2Att * 100).toFixed(2)}%</td>`;
+      } else {
+        html += `<td>${(dr.preAtt * 100).toFixed(2)}% → ${(dr.postAtt * 100).toFixed(2)}%</td>`;
+      }
       html += `</tr>`;
       totalNarr += r.narrQuotaRetirement;
       totalComm += r.totalCommission;
     }
 
-    const startAtt = allResults[0].preAtt;
-    const endAtt = allResults[allResults.length - 1].postAtt;
-    html += `<tr class="pipeline-total-row"><td></td><td>Total</td><td>${formatDollars(totalNarr)}</td><td>${formatDollars(totalComm)}</td><td>${(startAtt * 100).toFixed(2)}% → ${(endAtt * 100).toFixed(2)}%</td></tr>`;
+    const first = allResults[0], last = allResults[allResults.length - 1];
+    if (isDual) {
+      html += `<tr class="pipeline-total-row"><td></td><td>Total</td><td>${formatDollars(totalNarr)}</td><td>${formatDollars(totalComm)}</td><td>${(first.preL3Att * 100).toFixed(2)}% → ${(last.postL3Att * 100).toFixed(2)}%</td><td>${(first.preL2Att * 100).toFixed(2)}% → ${(last.postL2Att * 100).toFixed(2)}%</td></tr>`;
+    } else {
+      html += `<tr class="pipeline-total-row"><td></td><td>Total</td><td>${formatDollars(totalNarr)}</td><td>${formatDollars(totalComm)}</td><td>${(first.preAtt * 100).toFixed(2)}% → ${(last.postAtt * 100).toFixed(2)}%</td></tr>`;
+    }
     html += `</tbody></table></div>`;
 
     // Per-deal detailed breakdown (collapsed by default for multi-deal)
