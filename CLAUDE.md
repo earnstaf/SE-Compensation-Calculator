@@ -1,6 +1,6 @@
 # Pre-Sales Compensation Calculator
 
-Cross-platform Electron desktop app that calculates a Pre-Sales professional's commission payout on a single won deal.
+Cross-platform Electron desktop app that calculates a Pre-Sales professional's commission payout on one or more won deals, with pipeline stacking and attainment milestone visualization.
 
 ## Tech Stack
 
@@ -282,6 +282,89 @@ Results rendering refactored into reusable builder functions:
 - `buildDualMeasureHtml(r, inputs)` → HTML string
 - `renderResults()` and `renderDualMeasureResults()` are thin wrappers
 - Comparison mode uses the same builders for each column
+
+## Multi-Deal Pipeline Stacking
+
+Inline feature within the Deal Calculator (not a separate mode/tab). Users can model a sequence of expected deals with cumulative attainment carry-forward.
+
+### UI
+
+- "+ Add a Deal" button below Deal Details (always visible in deal mode)
+- Each additional deal is a full-size copy of Deal Details with: Opportunity Name text field, IARR, Renewed ARR, CARR, NARR, New Logo toggle, Multi-Year toggle, L3 Region toggle (dual-measure)
+- Deal boxes have action buttons: move up/down, duplicate, remove (X)
+- "Clear All Deals" button appears when 2+ deals exist
+- When only one deal exists, app looks and behaves exactly as before
+
+### Calculation Logic
+
+Deals processed sequentially top-to-bottom. Each deal's NARR Quota Retirement carries forward as quota credit for the next deal. Reuses existing `calculateCompensation()` / `calculateDualMeasureCompensation()` with no new calc-engine logic.
+
+```
+running_credit = NARR_Quota_Credit (from profile)
+for each deal:
+    result = calculateCompensation({...profile, narrQuotaCredit: running_credit, ...deal_inputs})
+    running_credit += result.narrQuotaRetirement
+```
+
+### Per-Deal Inline Results
+
+Each dynamic deal box shows: NARR Retired, Commission, Attainment (pre → post) below its inputs.
+
+### Commission Breakdown (Pipeline)
+
+When 2+ deals: summary table (#, Name, NARR Retired, Commission, Attainment Pre→Post), pipeline totals, cumulative attainment bar with per-deal color-coded segments. Deal crossing 100% gets accelerator highlight (⚡ badge).
+
+### Pipeline Interactions
+
+- Comparison mode and pipeline mode are mutually exclusive
+- Scenario presets populate last dynamic deal (or Deal 1 if no dynamic deals)
+- Reset exits pipeline mode and clears all deals
+- Switching to Annual mode exits pipeline mode
+- Deal reordering triggers full recalculation (order affects rates)
+- Pipeline data is NOT persisted between sessions
+
+### Pipeline Export
+
+Copy and PDF include: User Profile, per-deal sections (inputs + results), Pipeline Totals. PDF filename: `Pipeline-Breakdown-YYYY-MM-DD.pdf`. "Hide Sensitive Data" applies same redaction rules.
+
+### Dual-Measure Pipeline
+
+Running quota credit tracked independently per measure (L3, L2). Each deal box includes L3 region toggle. Two attainment bars (one per measure) in pipeline results.
+
+## Attainment Milestone Markers
+
+Visual progress bar showing pre-deal and post-deal attainment relative to key thresholds.
+
+### Deal Calculator Bar
+
+Appears in Commission Breakdown after Quota Attainment rows. Shows:
+- Pre-deal segment in navy (`--bar-pre-deal`)
+- Deal increment in crimson (`--accent`) below 100%, green (`--bar-accel`) above 100%
+- If deal straddles 100%: split segment (crimson below threshold, green above)
+- 100% threshold: prominent 2px vertical line
+- Milestone markers at 50%, 75%, 100%, 125%, 150%
+- Dynamic scale: max(150%, ceil(post-deal / 25) * 25)
+
+### Pipeline Attainment Bar
+
+When multiple deals: each deal gets a distinct color segment. Cumulative bar shows which deal pushed past each milestone. Deal crossing 100% has its segment split at the threshold.
+
+### Dual-Measure Bars
+
+Two bars per calculation (one per measure), each with independent 100% thresholds.
+
+### Annual Projections Bar
+
+Replaced old `buildAttainmentBar()` with new `buildDealAttainmentBar()`. Single segment from 0 to target attainment. For dual-measure: two bars.
+
+### Technical
+
+- Pure CSS/HTML, no charting library
+- `buildDealAttainmentBar({ segments, title })` — generic builder accepting array of `{ startPct, endPct, color, label }`
+- `buildSingleDealSegments(r)` / `buildMeasureBarSegments(measure)` — segment builders for single deals
+- `buildPipelineSegments(allResults, baseInputs)` / `buildPipelineSegmentsL2()` — segment builders for pipeline
+- CSS transitions on segment width (200ms ease)
+- Legend shows color swatches with labels
 
 ## Packaging & Distribution
 
