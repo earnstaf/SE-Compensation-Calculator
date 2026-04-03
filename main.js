@@ -112,48 +112,10 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
-  await initStore();
-  createWindow();
-
   const appVersion = app.getVersion();
-  const aboutMessage = `Pre-Sales Compensation Calculator\n\nVersion: ${appVersion}\nAuthor: Eric Arnst`;
-
   let manualUpdateCheck = false;
 
-  function checkForUpdatesManually() {
-    manualUpdateCheck = true;
-    autoUpdater.checkForUpdates().catch((err) => {
-      manualUpdateCheck = false;
-      dialog.showMessageBox({
-        type: 'error',
-        title: 'Update Check Failed',
-        message: 'Unable to check for updates.',
-        detail: err.message || 'Please check your internet connection and try again.'
-      });
-    });
-  }
-
-  const menuTemplate = [
-    ...(isMac ? [{
-      label: app.name,
-      submenu: [
-        { label: 'About', click: () => dialog.showMessageBox({ type: 'info', title: 'About', message: aboutMessage }) },
-        { type: 'separator' },
-        { role: 'quit' }
-      ]
-    }] : []),
-    {
-      label: 'Help',
-      submenu: [
-        { label: 'Check for Updates...', click: checkForUpdatesManually },
-        { type: 'separator' },
-        { label: 'About', click: () => dialog.showMessageBox({ type: 'info', title: 'About', message: aboutMessage }) }
-      ]
-    }
-  ];
-
-  Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate));
-
+  // Configure and fire update check immediately — no dependencies on store or window
   autoUpdater.autoDownload = false;
   autoUpdater.autoInstallOnAppQuit = true;
 
@@ -240,6 +202,46 @@ app.whenReady().then(async () => {
   });
 
   autoUpdater.checkForUpdates().catch(() => {});
+
+  // Store init and window creation run after update check is fired (non-blocking)
+  await initStore();
+  createWindow();
+
+  const aboutMessage = `Pre-Sales Compensation Calculator\n\nVersion: ${appVersion}\nAuthor: Eric Arnst`;
+
+  function checkForUpdatesManually() {
+    manualUpdateCheck = true;
+    autoUpdater.checkForUpdates().catch((err) => {
+      manualUpdateCheck = false;
+      dialog.showMessageBox({
+        type: 'error',
+        title: 'Update Check Failed',
+        message: 'Unable to check for updates.',
+        detail: err.message || 'Please check your internet connection and try again.'
+      });
+    });
+  }
+
+  const menuTemplate = [
+    ...(isMac ? [{
+      label: app.name,
+      submenu: [
+        { label: 'About', click: () => dialog.showMessageBox({ type: 'info', title: 'About', message: aboutMessage }) },
+        { type: 'separator' },
+        { role: 'quit' }
+      ]
+    }] : []),
+    {
+      label: 'Help',
+      submenu: [
+        { label: 'Check for Updates...', click: checkForUpdatesManually },
+        { type: 'separator' },
+        { label: 'About', click: () => dialog.showMessageBox({ type: 'info', title: 'About', message: aboutMessage }) }
+      ]
+    }
+  ];
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate));
 });
 
 app.on('window-all-closed', () => {
