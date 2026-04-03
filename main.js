@@ -118,6 +118,21 @@ app.whenReady().then(async () => {
   const appVersion = app.getVersion();
   const aboutMessage = `Pre-Sales Compensation Calculator\n\nVersion: ${appVersion}\nAuthor: Eric Arnst`;
 
+  let manualUpdateCheck = false;
+
+  function checkForUpdatesManually() {
+    manualUpdateCheck = true;
+    autoUpdater.checkForUpdates().catch((err) => {
+      manualUpdateCheck = false;
+      dialog.showMessageBox({
+        type: 'error',
+        title: 'Update Check Failed',
+        message: 'Unable to check for updates.',
+        detail: err.message || 'Please check your internet connection and try again.'
+      });
+    });
+  }
+
   const menuTemplate = [
     ...(isMac ? [{
       label: app.name,
@@ -130,6 +145,8 @@ app.whenReady().then(async () => {
     {
       label: 'Help',
       submenu: [
+        { label: 'Check for Updates...', click: checkForUpdatesManually },
+        { type: 'separator' },
         { label: 'About', click: () => dialog.showMessageBox({ type: 'info', title: 'About', message: aboutMessage }) }
       ]
     }
@@ -142,6 +159,15 @@ app.whenReady().then(async () => {
 
   autoUpdater.on('error', (err) => {
     console.error('Auto-updater error:', err);
+    if (manualUpdateCheck) {
+      manualUpdateCheck = false;
+      dialog.showMessageBox({
+        type: 'error',
+        title: 'Update Check Failed',
+        message: 'Unable to check for updates.',
+        detail: err.message || 'Please check your internet connection and try again.'
+      });
+    }
   });
 
   autoUpdater.on('checking-for-update', () => {
@@ -149,6 +175,7 @@ app.whenReady().then(async () => {
   });
 
   autoUpdater.on('update-available', (info) => {
+    manualUpdateCheck = false;
     console.log('Update available:', info.version);
     if (isMac) {
       dialog.showMessageBox({
@@ -186,6 +213,15 @@ app.whenReady().then(async () => {
 
   autoUpdater.on('update-not-available', () => {
     console.log('No update available.');
+    if (manualUpdateCheck) {
+      manualUpdateCheck = false;
+      dialog.showMessageBox({
+        type: 'info',
+        title: 'No Updates Available',
+        message: `You're on the latest version.`,
+        detail: `Pre-Sales Compensation Calculator ${appVersion} is currently the newest version available.`
+      });
+    }
   });
 
   autoUpdater.on('update-downloaded', (info) => {

@@ -1065,11 +1065,11 @@
     const myDisabled = multiYearDisabled ? ' disabled' : '';
     const myFieldCls = multiYearDisabled ? ' field-disabled' : '';
     const l3Section = dualMeasureActive ? `
-          <div class="field toggle-field dual-measure-only">
+          <div class="field dual-measure-only">
             <label class="field-label" id="deal-${dealId}-l3-region-toggle-label">
               Deal is within my ${currentPrimaryLabel} region
             </label>
-            <div style="display:flex;align-items:center;gap:8px">
+            <div class="toggle-field">
               <div class="toggle active" id="deal-${dealId}-l3-region-toggle" data-deal-id="${dealId}" data-deal-toggle="l3Region" role="switch" aria-checked="true" tabindex="0"></div>
               <span class="toggle-label" id="deal-${dealId}-l3-region-label">Yes</span>
             </div>
@@ -1089,30 +1089,30 @@
       <div class="field-grid">
         <div class="field">
           <label class="field-label">IARR</label>
-          <div class="input-wrap"><span class="input-prefix">$</span><input type="text" id="deal-${dealId}-iarr" value="0" data-currency data-deal-id="${dealId}" data-deal-field="iarr"></div>
+          <div class="input-wrap"><span class="input-prefix">$</span><input type="text" id="deal-${dealId}-iarr" class="has-prefix" value="0" data-currency data-deal-id="${dealId}" data-deal-field="iarr"></div>
         </div>
         <div class="field">
           <label class="field-label">Renewed ARR</label>
-          <div class="input-wrap"><span class="input-prefix">$</span><input type="text" id="deal-${dealId}-renewed-arr" value="0" data-currency data-deal-id="${dealId}" data-deal-field="renewedArr"></div>
+          <div class="input-wrap"><span class="input-prefix">$</span><input type="text" id="deal-${dealId}-renewed-arr" class="has-prefix" value="0" data-currency data-deal-id="${dealId}" data-deal-field="renewedArr"></div>
         </div>
         <div class="field">
           <label class="field-label">CARR</label>
-          <div class="input-wrap"><span class="input-prefix">$</span><input type="text" id="deal-${dealId}-carr" value="0" data-currency data-deal-id="${dealId}" data-deal-field="carr"></div>
+          <div class="input-wrap"><span class="input-prefix">$</span><input type="text" id="deal-${dealId}-carr" class="has-prefix" value="0" data-currency data-deal-id="${dealId}" data-deal-field="carr"></div>
         </div>
         <div class="field">
           <label class="field-label">NARR</label>
-          <div class="input-wrap"><span class="input-prefix">$</span><input type="text" id="deal-${dealId}-new-module-arr" data-currency data-deal-id="${dealId}" data-deal-field="newModuleArr"></div>
+          <div class="input-wrap"><span class="input-prefix">$</span><input type="text" id="deal-${dealId}-new-module-arr" class="has-prefix" data-currency data-deal-id="${dealId}" data-deal-field="newModuleArr"></div>
         </div>
-        <div class="field toggle-field">
+        <div class="field">
           <label class="field-label" id="deal-${dealId}-new-logo-field-label">${TEAM_PRESETS[currentTeam] && TEAM_PRESETS[currentTeam].mspMode ? 'MSP NARR' : 'New Logo'}</label>
-          <div style="display:flex;align-items:center;gap:8px">
+          <div class="toggle-field">
             <div class="toggle" id="deal-${dealId}-new-logo-toggle" data-deal-id="${dealId}" data-deal-toggle="newLogo" role="switch" aria-checked="false" tabindex="0"></div>
             <span class="toggle-label" id="deal-${dealId}-new-logo-label">No</span>
           </div>
         </div>
-        <div class="field toggle-field${myFieldCls}">
+        <div class="field${myFieldCls}">
           <label class="field-label">Multi-Year</label>
-          <div style="display:flex;align-items:center;gap:8px">
+          <div class="toggle-field">
             <div class="toggle${myDisabled}" id="deal-${dealId}-multi-year-toggle" data-deal-id="${dealId}" data-deal-toggle="multiYear" role="switch" aria-checked="false" tabindex="0"></div>
             <span class="toggle-label" id="deal-${dealId}-multi-year-label">No</span>
           </div>
@@ -1239,7 +1239,10 @@
     pipelineMode = true;
     btnCompare.classList.add('field-hidden');
     if (dealASection) {
-      dealASection.querySelector('.section-title').textContent = 'Deal 1';
+      const title = dealASection.querySelector('.section-title');
+      title.childNodes[0].textContent = 'Deal 1';
+      const nameInput = $('deal-1-name');
+      if (nameInput) nameInput.classList.remove('field-hidden');
     }
     document.querySelector('.results-title').textContent = 'Pipeline Breakdown';
     recalculate();
@@ -1249,7 +1252,10 @@
     pipelineMode = false;
     btnCompare.classList.remove('field-hidden');
     if (dealASection) {
-      dealASection.querySelector('.section-title').textContent = 'Deal Details';
+      const title = dealASection.querySelector('.section-title');
+      title.childNodes[0].textContent = 'Deal Details';
+      const nameInput = $('deal-1-name');
+      if (nameInput) { nameInput.classList.add('field-hidden'); nameInput.value = 'Deal 1'; }
     }
     document.querySelector('.results-title').textContent = 'Commission Breakdown';
     btnClearPipeline.classList.add('field-hidden');
@@ -1283,14 +1289,21 @@
     recalculate();
   }
 
-  function renderDealInlineResults(dealId, result, preAtt, postAtt) {
+  function renderDealInlineResults(dealId, result, preAtt, postAtt, dualAtt) {
     const el = $('deal-' + dealId + '-inline-results');
     if (!el) return;
     const narrRet = result.narrQuotaRetirement;
     const comm = result.totalCommission;
+    let attHtml;
+    if (dualAtt) {
+      attHtml = `<span class="deal-inline-stat"><span class="deal-inline-label">${currentPrimaryLabel} Att:</span><span class="deal-inline-value">${(dualAtt.preL3Att * 100).toFixed(2)}% → ${(dualAtt.postL3Att * 100).toFixed(2)}%</span></span>`
+        + `<span class="deal-inline-stat"><span class="deal-inline-label">${currentSecondaryLabel} Att:</span><span class="deal-inline-value">${(dualAtt.preL2Att * 100).toFixed(2)}% → ${(dualAtt.postL2Att * 100).toFixed(2)}%</span></span>`;
+    } else {
+      attHtml = `<span class="deal-inline-stat"><span class="deal-inline-label">Attainment:</span><span class="deal-inline-value">${(preAtt * 100).toFixed(2)}% → ${(postAtt * 100).toFixed(2)}%</span></span>`;
+    }
     el.innerHTML = `<span class="deal-inline-stat"><span class="deal-inline-label">NARR Retired:</span><span class="deal-inline-value">${formatDollars(narrRet)}</span></span>`
       + `<span class="deal-inline-stat"><span class="deal-inline-label">Commission:</span><span class="deal-inline-value positive">${formatDollars(comm)}</span></span>`
-      + `<span class="deal-inline-stat"><span class="deal-inline-label">Attainment:</span><span class="deal-inline-value">${(preAtt * 100).toFixed(2)}% → ${(postAtt * 100).toFixed(2)}%</span></span>`;
+      + attHtml;
     el.classList.add('has-results');
   }
 
@@ -1341,7 +1354,7 @@
         dealInputOverrides = getDealInputs(d.id);
       }
 
-      let inputs, result, preAtt, postAtt;
+      let inputs, result, preAtt, postAtt, preL3Att, postL3Att, preL2Att, postL2Att;
 
       if (baseInputs.dualMeasure) {
         inputs = Object.assign({}, baseInputs, dealInputOverrides, {
@@ -1349,11 +1362,16 @@
           l2NarrQuotaCredit: runningL2Credit
         });
         result = calculateDualMeasureCompensation(inputs);
-        preAtt = l3Quota > 0 ? runningL3Credit / l3Quota : (l2Quota > 0 ? runningL2Credit / l2Quota : 0);
-        const newL3 = runningL3Credit + result.narrQuotaRetirement;
+        preL3Att = l3Quota > 0 ? runningL3Credit / l3Quota : 0;
+        preL2Att = l2Quota > 0 ? runningL2Credit / l2Quota : 0;
+        const l3Retirement = result.dealInL3 ? result.narrQuotaRetirement : 0;
+        const newL3 = runningL3Credit + l3Retirement;
         const newL2 = runningL2Credit + result.narrQuotaRetirement;
-        postAtt = l3Quota > 0 ? newL3 / l3Quota : (l2Quota > 0 ? newL2 / l2Quota : 0);
-        runningL3Credit += result.narrQuotaRetirement;
+        postL3Att = l3Quota > 0 ? newL3 / l3Quota : 0;
+        postL2Att = l2Quota > 0 ? newL2 / l2Quota : 0;
+        preAtt = preL3Att || preL2Att;
+        postAtt = postL3Att || postL2Att;
+        runningL3Credit += l3Retirement;
         runningL2Credit += result.narrQuotaRetirement;
       } else {
         inputs = Object.assign({}, baseInputs, dealInputOverrides, { narrQuotaCredit: runningCredit });
@@ -1366,11 +1384,18 @@
       const nameEl = d.isBase ? null : $('deal-' + d.id + '-name');
       const name = d.isBase ? getDeal1Name() : (nameEl ? nameEl.value || ('Deal ' + (i + 1)) : ('Deal ' + (i + 1)));
 
-      allResults.push({ deal: d, name: name, inputs: inputs, result: result, preAtt: preAtt, postAtt: postAtt, dealNumber: i + 1 });
+      const entry = { deal: d, name: name, inputs: inputs, result: result, preAtt: preAtt, postAtt: postAtt, dealNumber: i + 1 };
+      if (baseInputs.dualMeasure) {
+        entry.preL3Att = preL3Att;
+        entry.postL3Att = postL3Att;
+        entry.preL2Att = preL2Att;
+        entry.postL2Att = postL2Att;
+      }
+      allResults.push(entry);
 
       // Render inline results for dynamic deals
       if (!d.isBase) {
-        renderDealInlineResults(d.id, result, preAtt, postAtt);
+        renderDealInlineResults(d.id, result, preAtt, postAtt, baseInputs.dualMeasure ? { preL3Att, postL3Att, preL2Att, postL2Att } : null);
       }
     }
 
@@ -1378,10 +1403,8 @@
   }
 
   function getDeal1Name() {
-    if (dealASection) {
-      const title = dealASection.querySelector('.section-title');
-      return title ? title.textContent : 'Deal 1';
-    }
+    const nameInput = $('deal-1-name');
+    if (nameInput && pipelineMode) return nameInput.value || 'Deal 1';
     return 'Deal 1';
   }
 
@@ -1407,26 +1430,40 @@
 
     // Pipeline summary table
     let totalNarr = 0, totalComm = 0;
+    const isDual = baseInputs.dualMeasure;
     html += `<div class="result-group"><div class="result-group-title">Pipeline Summary</div>`;
-    html += `<table class="pipeline-summary-table"><thead><tr><th>#</th><th>Deal</th><th>NARR Retired</th><th>Commission</th><th>Attainment</th></tr></thead><tbody>`;
+    if (isDual) {
+      html += `<table class="pipeline-summary-table"><thead><tr><th>#</th><th>Deal</th><th>NARR Retired</th><th>Commission</th><th>${currentPrimaryLabel} Att</th><th>${currentSecondaryLabel} Att</th></tr></thead><tbody>`;
+    } else {
+      html += `<table class="pipeline-summary-table"><thead><tr><th>#</th><th>Deal</th><th>NARR Retired</th><th>Commission</th><th>Attainment</th></tr></thead><tbody>`;
+    }
     for (const dr of allResults) {
       const r = dr.result;
-      const crossesThreshold = dr.preAtt < 1.0 && dr.postAtt > 1.0;
+      const crossesL3 = isDual ? (dr.preL3Att < 1.0 && dr.postL3Att > 1.0) : false;
+      const crossesThreshold = isDual ? crossesL3 : (dr.preAtt < 1.0 && dr.postAtt > 1.0);
       const rowCls = crossesThreshold ? ' class="pipeline-accel-row"' : '';
       html += `<tr${rowCls}>`;
       html += `<td>${dr.dealNumber}</td>`;
       html += `<td>${dr.name}</td>`;
       html += `<td>${formatDollars(r.narrQuotaRetirement)}</td>`;
       html += `<td>${formatDollars(r.totalCommission)}</td>`;
-      html += `<td>${(dr.preAtt * 100).toFixed(2)}% → ${(dr.postAtt * 100).toFixed(2)}%</td>`;
+      if (isDual) {
+        html += `<td>${(dr.preL3Att * 100).toFixed(2)}% → ${(dr.postL3Att * 100).toFixed(2)}%</td>`;
+        html += `<td>${(dr.preL2Att * 100).toFixed(2)}% → ${(dr.postL2Att * 100).toFixed(2)}%</td>`;
+      } else {
+        html += `<td>${(dr.preAtt * 100).toFixed(2)}% → ${(dr.postAtt * 100).toFixed(2)}%</td>`;
+      }
       html += `</tr>`;
       totalNarr += r.narrQuotaRetirement;
       totalComm += r.totalCommission;
     }
 
-    const startAtt = allResults[0].preAtt;
-    const endAtt = allResults[allResults.length - 1].postAtt;
-    html += `<tr class="pipeline-total-row"><td></td><td>Total</td><td>${formatDollars(totalNarr)}</td><td>${formatDollars(totalComm)}</td><td>${(startAtt * 100).toFixed(2)}% → ${(endAtt * 100).toFixed(2)}%</td></tr>`;
+    const first = allResults[0], last = allResults[allResults.length - 1];
+    if (isDual) {
+      html += `<tr class="pipeline-total-row"><td></td><td>Total</td><td>${formatDollars(totalNarr)}</td><td>${formatDollars(totalComm)}</td><td>${(first.preL3Att * 100).toFixed(2)}% → ${(last.postL3Att * 100).toFixed(2)}%</td><td>${(first.preL2Att * 100).toFixed(2)}% → ${(last.postL2Att * 100).toFixed(2)}%</td></tr>`;
+    } else {
+      html += `<tr class="pipeline-total-row"><td></td><td>Total</td><td>${formatDollars(totalNarr)}</td><td>${formatDollars(totalComm)}</td><td>${(first.preAtt * 100).toFixed(2)}% → ${(last.postAtt * 100).toFixed(2)}%</td></tr>`;
+    }
     html += `</tbody></table></div>`;
 
     // Per-deal detailed breakdown (collapsed by default for multi-deal)
@@ -1457,14 +1494,16 @@
 
   function buildPipelineSegments(allResults, baseInputs) {
     const segments = [];
-    const startAtt = allResults[0].preAtt * 100;
+    const isDual = baseInputs.dualMeasure;
+    const first = allResults[0];
+    const startAtt = (isDual ? first.preL3Att : first.preAtt) * 100;
     if (startAtt > 0) {
       segments.push({ startPct: 0, endPct: startAtt, color: BAR_COLORS.preDeal, label: 'Pre-pipeline (' + startAtt.toFixed(1) + '%)' });
     }
     for (let i = 0; i < allResults.length; i++) {
       const dr = allResults[i];
-      const pre = dr.preAtt * 100;
-      const post = dr.postAtt * 100;
+      const pre = (isDual ? dr.preL3Att : dr.preAtt) * 100;
+      const post = (isDual ? dr.postL3Att : dr.postAtt) * 100;
       if (post <= pre) continue;
       const color = DEAL_COLORS[i % DEAL_COLORS.length];
       if (pre >= 100) {
@@ -3130,6 +3169,10 @@
       e.preventDefault();
       e.target.click();
     }
+  });
+
+  $('deal-1-name').addEventListener('input', function () {
+    if (pipelineMode) recalculate();
   });
 
   loadSettings();
