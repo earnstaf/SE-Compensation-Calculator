@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self';">
   <title>Pre-Sales Compensation Calculator</title>
-  <link rel="icon" href="assets/icon.png">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-  <noscript>This calculator requires JavaScript to run.</noscript>
   <div class="app deal-mode">
     <div class="mode-tabs">
       <button class="mode-tab active" data-mode="deal">Deal Calculator</button>
@@ -490,6 +489,13 @@
         </div>
       </div>
 
+      <!-- Pipeline: container for additional deals + add button -->
+      <div class="deal-mode-only" id="pipeline-container"></div>
+      <div class="deal-mode-only pipeline-actions" id="pipeline-actions">
+        <button class="btn btn-add-deal" id="btn-add-deal"><span class="btn-add-icon">+</span> Add a Deal</button>
+        <button class="btn btn-clear-pipeline field-hidden" id="btn-clear-pipeline">Clear All Deals</button>
+      </div>
+
       <!-- Annual Projections Inputs -->
       <div class="section annual-mode-only" id="annual-inputs-section">
         <div class="section-title">Annual Projection Inputs</div>
@@ -700,11 +706,10 @@
     </div>
   </div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js" integrity="sha512-MpDFIChbcXl2QgipQrt1VcPHMldRILetapBEoaBFCnU/KTar5rsEsNAWPsFNlRSeoGKLfJCLiLk/B+JNbYaSvA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js" integrity="sha512-MpDFIChbcXl2QgipQrt1VcPHMldRILetapBEmc2JMFaO2cSjRs3sYGMZPFECMJfjPOgHnbGJCdkaE1yvOYMGSg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="js/web-settings.js"></script>
   <script src="js/calc-engine.js"></script>
   <script src="js/scenarios.js"></script>
-  <script src="js/web-settings.js"></script>
   <script src="js/ui.js"></script>
-  <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "10145a3c6ad94b7689937959bf7c8bac"}'></script><!-- End Cloudflare Web Analytics -->
 </body>
 </html>
