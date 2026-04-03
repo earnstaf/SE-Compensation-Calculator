@@ -1006,22 +1006,12 @@
 
   function buildSingleDealSegments(r) {
     const segments = [];
-    const prePct = r.narrQuotaAttainment * 100;
     const postPct = r.postDealAttainment * 100;
+    const fillColor = postPct >= 100 ? BAR_COLORS.accel : BAR_COLORS.accent;
+    const fillLabel = postPct >= 100 ? 'Attainment (' + postPct.toFixed(1) + '%) — Accelerated' : 'Attainment (' + postPct.toFixed(1) + '%)';
 
-    if (prePct > 0) {
-      segments.push({ startPct: 0, endPct: prePct, color: BAR_COLORS.preDeal, label: 'Pre-deal (' + prePct.toFixed(1) + '%)' });
-    }
-
-    if (r.narrQuotaRetirement > 0) {
-      if (prePct >= 100) {
-        segments.push({ startPct: prePct, endPct: postPct, color: BAR_COLORS.accel, label: 'Deal (accelerated)' });
-      } else if (postPct <= 100) {
-        segments.push({ startPct: prePct, endPct: postPct, color: BAR_COLORS.accent, label: 'Deal' });
-      } else {
-        segments.push({ startPct: prePct, endPct: 100, color: BAR_COLORS.accent, label: 'Deal (base)' });
-        segments.push({ startPct: 100, endPct: postPct, color: BAR_COLORS.accel, label: 'Deal (accelerated)' });
-      }
+    if (postPct > 0) {
+      segments.push({ startPct: 0, endPct: postPct, color: fillColor, label: fillLabel });
     }
 
     return segments;
@@ -1029,22 +1019,12 @@
 
   function buildMeasureBarSegments(measure) {
     const segments = [];
-    const prePct = measure.narrQuotaAttainment * 100;
     const postPct = measure.postDealAttainment * 100;
+    const fillColor = postPct >= 100 ? BAR_COLORS.accel : BAR_COLORS.accent;
+    const fillLabel = postPct >= 100 ? 'Attainment (' + postPct.toFixed(1) + '%) — Accelerated' : 'Attainment (' + postPct.toFixed(1) + '%)';
 
-    if (prePct > 0) {
-      segments.push({ startPct: 0, endPct: prePct, color: BAR_COLORS.preDeal, label: 'Pre-deal (' + prePct.toFixed(1) + '%)' });
-    }
-
-    if (measure.commission > 0) {
-      if (prePct >= 100) {
-        segments.push({ startPct: prePct, endPct: postPct, color: BAR_COLORS.accel, label: 'Deal (accelerated)' });
-      } else if (postPct <= 100) {
-        segments.push({ startPct: prePct, endPct: postPct, color: BAR_COLORS.accent, label: 'Deal' });
-      } else {
-        segments.push({ startPct: prePct, endPct: 100, color: BAR_COLORS.accent, label: 'Deal (base)' });
-        segments.push({ startPct: 100, endPct: postPct, color: BAR_COLORS.accel, label: 'Deal (accelerated)' });
-      }
+    if (postPct > 0) {
+      segments.push({ startPct: 0, endPct: postPct, color: fillColor, label: fillLabel });
     }
 
     return segments;
@@ -2960,15 +2940,8 @@
     container.innerHTML = html;
     document.body.appendChild(container);
     try {
-      await html2pdf().set({
-        margin: [0.5, 0.5, 0.5, 0.5],
-        filename: filename,
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-      }).from(container).save();
-    } catch (e) {
-      console.error('PDF export failed:', e);
-    }
+      await html2pdf().set({ margin: [0.5, 0.5, 0.5, 0.5], filename: filename, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } }).from(container).save();
+    } catch (e) { console.error('PDF export failed:', e); }
     document.body.removeChild(container);
   });
 
