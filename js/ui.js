@@ -1362,13 +1362,14 @@
         result = calculateDualMeasureCompensation(inputs);
         preL3Att = l3Quota > 0 ? runningL3Credit / l3Quota : 0;
         preL2Att = l2Quota > 0 ? runningL2Credit / l2Quota : 0;
-        const newL3 = runningL3Credit + result.narrQuotaRetirement;
+        const l3Retirement = result.dealInL3 ? result.narrQuotaRetirement : 0;
+        const newL3 = runningL3Credit + l3Retirement;
         const newL2 = runningL2Credit + result.narrQuotaRetirement;
         postL3Att = l3Quota > 0 ? newL3 / l3Quota : 0;
         postL2Att = l2Quota > 0 ? newL2 / l2Quota : 0;
         preAtt = preL3Att || preL2Att;
         postAtt = postL3Att || postL2Att;
-        runningL3Credit += result.narrQuotaRetirement;
+        runningL3Credit += l3Retirement;
         runningL2Credit += result.narrQuotaRetirement;
       } else {
         inputs = Object.assign({}, baseInputs, dealInputOverrides, { narrQuotaCredit: runningCredit });
@@ -1491,14 +1492,16 @@
 
   function buildPipelineSegments(allResults, baseInputs) {
     const segments = [];
-    const startAtt = allResults[0].preAtt * 100;
+    const isDual = baseInputs.dualMeasure;
+    const first = allResults[0];
+    const startAtt = (isDual ? first.preL3Att : first.preAtt) * 100;
     if (startAtt > 0) {
       segments.push({ startPct: 0, endPct: startAtt, color: BAR_COLORS.preDeal, label: 'Pre-pipeline (' + startAtt.toFixed(1) + '%)' });
     }
     for (let i = 0; i < allResults.length; i++) {
       const dr = allResults[i];
-      const pre = dr.preAtt * 100;
-      const post = dr.postAtt * 100;
+      const pre = (isDual ? dr.preL3Att : dr.preAtt) * 100;
+      const post = (isDual ? dr.postL3Att : dr.postAtt) * 100;
       if (post <= pre) continue;
       const color = DEAL_COLORS[i % DEAL_COLORS.length];
       if (pre >= 100) {
