@@ -240,11 +240,12 @@ function calculateAnnualCompensation(inputs) {
   const totalNarr = narrQuota * targetAttainment;
 
   // Split NARR into 4 buckets using inclusion-exclusion for overlap
-  const overlap = Math.max(0, newLogoPct + multiYearPct - 1);
-  const nlOnlyPct = newLogoPct - overlap;
-  const myOnlyPct = multiYearPct - overlap;
-  const bothPct = overlap;
-  const plainPct = Math.max(0, 1 - newLogoPct - multiYearPct + overlap);
+  // Round to 10 decimal places to eliminate floating-point noise (e.g. 1e-16 → 0)
+  const overlap = Math.max(0, +(newLogoPct + multiYearPct - 1).toFixed(10));
+  const nlOnlyPct = +(newLogoPct - overlap).toFixed(10);
+  const myOnlyPct = +(multiYearPct - overlap).toFixed(10);
+  const bothPct = +overlap.toFixed(10);
+  const plainPct = Math.max(0, +(1 - newLogoPct - multiYearPct + overlap).toFixed(10));
 
   // Commission rates per bucket
   const rates = [

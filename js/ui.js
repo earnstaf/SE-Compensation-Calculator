@@ -1087,19 +1087,19 @@
       <div class="field-grid">
         <div class="field">
           <label class="field-label">IARR</label>
-          <div class="input-wrap"><span class="input-prefix">$</span><input type="text" id="deal-${dealId}-iarr" value="0" data-currency data-deal-id="${dealId}" data-deal-field="iarr"></div>
+          <div class="input-wrap"><span class="input-prefix">$</span><input type="text" id="deal-${dealId}-iarr" class="has-prefix" value="0" data-currency data-deal-id="${dealId}" data-deal-field="iarr"></div>
         </div>
         <div class="field">
           <label class="field-label">Renewed ARR</label>
-          <div class="input-wrap"><span class="input-prefix">$</span><input type="text" id="deal-${dealId}-renewed-arr" value="0" data-currency data-deal-id="${dealId}" data-deal-field="renewedArr"></div>
+          <div class="input-wrap"><span class="input-prefix">$</span><input type="text" id="deal-${dealId}-renewed-arr" class="has-prefix" value="0" data-currency data-deal-id="${dealId}" data-deal-field="renewedArr"></div>
         </div>
         <div class="field">
           <label class="field-label">CARR</label>
-          <div class="input-wrap"><span class="input-prefix">$</span><input type="text" id="deal-${dealId}-carr" value="0" data-currency data-deal-id="${dealId}" data-deal-field="carr"></div>
+          <div class="input-wrap"><span class="input-prefix">$</span><input type="text" id="deal-${dealId}-carr" class="has-prefix" value="0" data-currency data-deal-id="${dealId}" data-deal-field="carr"></div>
         </div>
         <div class="field">
           <label class="field-label">NARR</label>
-          <div class="input-wrap"><span class="input-prefix">$</span><input type="text" id="deal-${dealId}-new-module-arr" data-currency data-deal-id="${dealId}" data-deal-field="newModuleArr"></div>
+          <div class="input-wrap"><span class="input-prefix">$</span><input type="text" id="deal-${dealId}-new-module-arr" class="has-prefix" data-currency data-deal-id="${dealId}" data-deal-field="newModuleArr"></div>
         </div>
         <div class="field">
           <label class="field-label" id="deal-${dealId}-new-logo-field-label">${TEAM_PRESETS[currentTeam] && TEAM_PRESETS[currentTeam].mspMode ? 'MSP NARR' : 'New Logo'}</label>
