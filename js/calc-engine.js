@@ -379,3 +379,7 @@ function calculateDualMeasureAnnualCompensation(inputs) {
     rarrCommission
   };
 }
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { calculateCompensation, calculateDualMeasureCompensation, calculateAnnualCompensation, calculateDualMeasureAnnualCompensation, calculateMeasureCommission };
+}

@@ -282,7 +282,7 @@
   }
 
   function formatRateAsPercent(val) {
-    return (val * 100).toFixed(2).replace(/0+$/, '').replace(/\.$/, '') + '%';
+    return (val * 100).toFixed(4).replace(/0+$/, '').replace(/\.$/, '') + '%';
   }
 
   function setCurrencyDisplay(input, val) {

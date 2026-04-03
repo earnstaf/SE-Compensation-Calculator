@@ -8,7 +8,8 @@
     "preview": "serve . -l 3000 --no-clipboard",
     "build:win": "electron-builder --win",
     "build:mac": "electron-builder --mac",
-    "build": "electron-builder --win --mac"
+    "build": "electron-builder --win --mac",
+    "test": "jest"
   },
   "build": {
     "appId": "com.se-comp-calc",
@@ -41,7 +42,10 @@
       "allowToChangeInstallationDirectory": false
     },
     "mac": {
-      "target": ["dmg", "zip"],
+      "target": [
+        "dmg",
+        "zip"
+      ],
       "icon": "assets/icon.png",
       "artifactName": "${productName}-${arch}.${ext}"
     }
@@ -49,6 +53,7 @@
   "devDependencies": {
     "electron": "^33.0.0",
     "electron-builder": "^25.0.0",
+    "jest": "^30.3.0",
     "serve": "^14.2.6"
   },
   "dependencies": {
