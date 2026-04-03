@@ -1006,30 +1006,47 @@
     return html;
   }
 
-  function buildSingleDealSegments(r) {
-    const segments = [];
-    const postPct = r.postDealAttainment * 100;
-    const fillColor = postPct >= 100 ? BAR_COLORS.accel : BAR_COLORS.accent;
-    const fillLabel = postPct >= 100 ? 'Attainment (' + postPct.toFixed(1) + '%) — Accelerated' : 'Attainment (' + postPct.toFixed(1) + '%)';
+  const BAR_COLORS_MUTED = {
+    belowQuota: '#4a2030',
+    aboveQuota: '#2d5a3a'
+  };
 
-    if (postPct > 0) {
-      segments.push({ startPct: 0, endPct: postPct, color: fillColor, label: fillLabel });
+  function buildAttainmentSegments(prePct, postPct, hasDealNarr) {
+    const segments = [];
+
+    if (prePct > 0) {
+      const preColor = prePct >= 100 ? BAR_COLORS_MUTED.aboveQuota : BAR_COLORS_MUTED.belowQuota;
+      segments.push({ startPct: 0, endPct: prePct, color: preColor, label: 'Pre-deal (' + prePct.toFixed(1) + '%)' });
+    }
+
+    if (hasDealNarr && postPct > prePct) {
+      if (prePct >= 100) {
+        segments.push({ startPct: prePct, endPct: postPct, color: BAR_COLORS.accel, label: 'Deal (accelerated)' });
+      } else if (postPct <= 100) {
+        segments.push({ startPct: prePct, endPct: postPct, color: BAR_COLORS.accent, label: 'Deal' });
+      } else {
+        segments.push({ startPct: prePct, endPct: 100, color: BAR_COLORS.accent, label: 'Deal (base)' });
+        segments.push({ startPct: 100, endPct: postPct, color: BAR_COLORS.accel, label: 'Deal (accelerated)' });
+      }
     }
 
     return segments;
   }
 
+  function buildSingleDealSegments(r) {
+    return buildAttainmentSegments(
+      r.narrQuotaAttainment * 100,
+      r.postDealAttainment * 100,
+      r.narrQuotaRetirement > 0
+    );
+  }
+
   function buildMeasureBarSegments(measure) {
-    const segments = [];
-    const postPct = measure.postDealAttainment * 100;
-    const fillColor = postPct >= 100 ? BAR_COLORS.accel : BAR_COLORS.accent;
-    const fillLabel = postPct >= 100 ? 'Attainment (' + postPct.toFixed(1) + '%) — Accelerated' : 'Attainment (' + postPct.toFixed(1) + '%)';
-
-    if (postPct > 0) {
-      segments.push({ startPct: 0, endPct: postPct, color: fillColor, label: fillLabel });
-    }
-
-    return segments;
+    return buildAttainmentSegments(
+      measure.narrQuotaAttainment * 100,
+      measure.postDealAttainment * 100,
+      measure.commission > 0
+    );
   }
 
   // === Pipeline Stacking ===
