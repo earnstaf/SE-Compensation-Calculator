@@ -959,6 +959,11 @@
 
     const milestones = [50, 75, 100, 125, 150].filter(m => m <= maxPct);
 
+    console.log('buildDealAttainmentBar:', title, 'maxEnd:', maxEnd, 'maxPct:', maxPct, 'toLeft(100):', toLeft(100), 'toLeft(125):', toLeft(125), 'segments:', segments.length);
+    for (const seg of segments) {
+      console.log('  seg:', seg.label, 'left:', toLeft(seg.startPct), 'width:', toLeft(seg.endPct) - toLeft(seg.startPct));
+    }
+
     let html = `<div class="deal-attainment-bar">`;
     if (title) html += `<div class="deal-bar-title">${title}</div>`;
 
