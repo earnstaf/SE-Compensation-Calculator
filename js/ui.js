@@ -1237,7 +1237,10 @@
     pipelineMode = true;
     btnCompare.classList.add('field-hidden');
     if (dealASection) {
-      dealASection.querySelector('.section-title').textContent = 'Deal 1';
+      const title = dealASection.querySelector('.section-title');
+      title.childNodes[0].textContent = 'Deal 1';
+      const nameInput = $('deal-1-name');
+      if (nameInput) nameInput.classList.remove('field-hidden');
     }
     document.querySelector('.results-title').textContent = 'Pipeline Breakdown';
     recalculate();
@@ -1247,7 +1250,10 @@
     pipelineMode = false;
     btnCompare.classList.remove('field-hidden');
     if (dealASection) {
-      dealASection.querySelector('.section-title').textContent = 'Deal Details';
+      const title = dealASection.querySelector('.section-title');
+      title.childNodes[0].textContent = 'Deal Details';
+      const nameInput = $('deal-1-name');
+      if (nameInput) { nameInput.classList.add('field-hidden'); nameInput.value = 'Deal 1'; }
     }
     document.querySelector('.results-title').textContent = 'Commission Breakdown';
     btnClearPipeline.classList.add('field-hidden');
@@ -1376,10 +1382,8 @@
   }
 
   function getDeal1Name() {
-    if (dealASection) {
-      const title = dealASection.querySelector('.section-title');
-      return title ? title.textContent : 'Deal 1';
-    }
+    const nameInput = $('deal-1-name');
+    if (nameInput && pipelineMode) return nameInput.value || 'Deal 1';
     return 'Deal 1';
   }
 
@@ -3134,6 +3138,10 @@
       e.preventDefault();
       e.target.click();
     }
+  });
+
+  $('deal-1-name').addEventListener('input', function () {
+    if (pipelineMode) recalculate();
   });
 
   loadSettings();
