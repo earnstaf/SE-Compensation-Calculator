@@ -960,15 +960,8 @@
     let html = `<div class="deal-attainment-bar">`;
     if (title) html += `<div class="deal-bar-title">${title}</div>`;
 
-    // Markers above the track
-    html += `<div class="deal-bar-markers">`;
-    for (const m of milestones) {
-      const cls = m === 100 ? ' deal-bar-marker-100' : '';
-      html += `<div class="deal-bar-marker${cls}" style="left:${toLeft(m)}%">${m}%</div>`;
-    }
-    html += `</div>`;
-
-    // Track with segments and threshold
+    // Track with segments, tick lines, threshold, and labels
+    html += `<div class="deal-bar-track-wrap">`;
     html += `<div class="deal-bar-track">`;
     for (const seg of segments) {
       const left = toLeft(seg.startPct);
@@ -978,6 +971,19 @@
       }
     }
     html += `<div class="deal-bar-threshold" style="left:${toLeft(100)}%"></div>`;
+    for (const m of milestones) {
+      const opacity = m === 100 ? '0.6' : '0.2';
+      html += `<div class="deal-bar-tick" style="left:${toLeft(m)}%;opacity:${opacity}"></div>`;
+    }
+    html += `</div>`;
+
+    // Labels below the track
+    html += `<div class="deal-bar-label-row">`;
+    for (const m of milestones) {
+      const cls = m === 100 ? ' deal-bar-label-100' : '';
+      html += `<span class="deal-bar-label${cls}" style="left:${toLeft(m)}%">${m}%</span>`;
+    }
+    html += `</div>`;
     html += `</div>`;
 
     // Legend
