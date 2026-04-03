@@ -1063,11 +1063,11 @@
     const myDisabled = multiYearDisabled ? ' disabled' : '';
     const myFieldCls = multiYearDisabled ? ' field-disabled' : '';
     const l3Section = dualMeasureActive ? `
-          <div class="field toggle-field dual-measure-only">
+          <div class="field dual-measure-only">
             <label class="field-label" id="deal-${dealId}-l3-region-toggle-label">
               Deal is within my ${currentPrimaryLabel} region
             </label>
-            <div style="display:flex;align-items:center;gap:8px">
+            <div class="toggle-field">
               <div class="toggle active" id="deal-${dealId}-l3-region-toggle" data-deal-id="${dealId}" data-deal-toggle="l3Region" role="switch" aria-checked="true" tabindex="0"></div>
               <span class="toggle-label" id="deal-${dealId}-l3-region-label">Yes</span>
             </div>
@@ -1101,16 +1101,16 @@
           <label class="field-label">NARR</label>
           <div class="input-wrap"><span class="input-prefix">$</span><input type="text" id="deal-${dealId}-new-module-arr" data-currency data-deal-id="${dealId}" data-deal-field="newModuleArr"></div>
         </div>
-        <div class="field toggle-field">
+        <div class="field">
           <label class="field-label" id="deal-${dealId}-new-logo-field-label">${TEAM_PRESETS[currentTeam] && TEAM_PRESETS[currentTeam].mspMode ? 'MSP NARR' : 'New Logo'}</label>
-          <div style="display:flex;align-items:center;gap:8px">
+          <div class="toggle-field">
             <div class="toggle" id="deal-${dealId}-new-logo-toggle" data-deal-id="${dealId}" data-deal-toggle="newLogo" role="switch" aria-checked="false" tabindex="0"></div>
             <span class="toggle-label" id="deal-${dealId}-new-logo-label">No</span>
           </div>
         </div>
-        <div class="field toggle-field${myFieldCls}">
+        <div class="field${myFieldCls}">
           <label class="field-label">Multi-Year</label>
-          <div style="display:flex;align-items:center;gap:8px">
+          <div class="toggle-field">
             <div class="toggle${myDisabled}" id="deal-${dealId}-multi-year-toggle" data-deal-id="${dealId}" data-deal-toggle="multiYear" role="switch" aria-checked="false" tabindex="0"></div>
             <span class="toggle-label" id="deal-${dealId}-multi-year-label">No</span>
           </div>
