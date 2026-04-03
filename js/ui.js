@@ -251,6 +251,10 @@
 
   function parseRate(str) {
     if (!str) return 0;
+    str = str.trim();
+    if (str.endsWith('%')) {
+      return (parseFloat(str) || 0) / 100;
+    }
     return parseFloat(str) || 0;
   }
 
@@ -326,9 +330,9 @@
 
     currentTeam = teamKey;
     teamSelect.value = teamKey;
-    fields.newLogoUplift.value = preset.newLogoUplift;
-    fields.multiYearUplift.value = preset.multiYearUplift;
-    fields.acceleratedPcr.value = preset.acceleratedPcr;
+    fields.newLogoUplift.value = formatRateAsPercent(preset.newLogoUplift);
+    fields.multiYearUplift.value = formatRateAsPercent(preset.multiYearUplift);
+    fields.acceleratedPcr.value = formatRateAsPercent(preset.acceleratedPcr);
 
     multiYearDisabled = preset.disableMultiYear;
     if (multiYearDisabled) {
@@ -359,7 +363,7 @@
     // RARR mode: LATAM or PSA-MSP
     if (preset.latamMode || preset.rarrMode) {
       rarrRateField.classList.remove('field-hidden');
-      fields.rarrRate.value = preset.rarrRate || 0.001;
+      fields.rarrRate.value = formatRateAsPercent(preset.rarrRate || 0.001);
     } else {
       rarrRateField.classList.add('field-hidden');
     }
@@ -397,12 +401,12 @@
       // Hide custom label/split fields for preset teams
       customLabelsRow.classList.add('field-hidden');
 
-      fields.l3NewLogoUplift.value = preset.l3NewLogoUplift;
-      fields.l3MultiYearUplift.value = preset.l3MultiYearUplift;
-      fields.l2NewLogoUplift.value = preset.l2NewLogoUplift;
-      fields.l2MultiYearUplift.value = preset.l2MultiYearUplift;
-      fields.l3AcceleratedPcr.value = preset.l3AcceleratedPcr;
-      fields.l2AcceleratedPcr.value = preset.l2AcceleratedPcr;
+      fields.l3NewLogoUplift.value = formatRateAsPercent(preset.l3NewLogoUplift);
+      fields.l3MultiYearUplift.value = formatRateAsPercent(preset.l3MultiYearUplift);
+      fields.l2NewLogoUplift.value = formatRateAsPercent(preset.l2NewLogoUplift);
+      fields.l2MultiYearUplift.value = formatRateAsPercent(preset.l2MultiYearUplift);
+      fields.l3AcceleratedPcr.value = formatRateAsPercent(preset.l3AcceleratedPcr);
+      fields.l2AcceleratedPcr.value = formatRateAsPercent(preset.l2AcceleratedPcr);
     } else if (teamKey === 'custom') {
       // Custom: show toggle, let user control it
       dualMeasureLocked = false;
@@ -2590,10 +2594,10 @@
     fields.ote.value = '';
     fields.narrQuota.value = '';
     fields.narrQuotaCredit.value = '';
-    fields.newLogoUplift.value = '0.0005';
-    fields.multiYearUplift.value = '0.0005';
-    fields.acceleratedPcr.value = '0.0025';
-    fields.rarrRate.value = '0.001';
+    fields.newLogoUplift.value = '0.05%';
+    fields.multiYearUplift.value = '0.05%';
+    fields.acceleratedPcr.value = '0.25%';
+    fields.rarrRate.value = '0.1%';
     fields.iarr.value = '0';
     fields.renewedArr.value = '0';
     fields.carr.value = '0';
@@ -2608,12 +2612,12 @@
     fields.l2Attainment.value = '';
     fields.l3Pcr.value = '';
     fields.l2Pcr.value = '';
-    fields.l3NewLogoUplift.value = '0.00045';
-    fields.l3MultiYearUplift.value = '0.00045';
-    fields.l2NewLogoUplift.value = '0.00005';
-    fields.l2MultiYearUplift.value = '0.00005';
-    fields.l3AcceleratedPcr.value = '0.002';
-    fields.l2AcceleratedPcr.value = '0.0005';
+    fields.l3NewLogoUplift.value = '0.045%';
+    fields.l3MultiYearUplift.value = '0.045%';
+    fields.l2NewLogoUplift.value = '0.005%';
+    fields.l2MultiYearUplift.value = '0.005%';
+    fields.l3AcceleratedPcr.value = '0.2%';
+    fields.l2AcceleratedPcr.value = '0.05%';
 
     // Reset L3 region toggle to default (on)
     l3RegionToggle.classList.add('active');
