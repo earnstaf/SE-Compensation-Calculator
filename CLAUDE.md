@@ -46,7 +46,12 @@ se-comp-calc/
 
 ### Auto-Update
 
-- electron-updater checks GitHub Releases on app launch
+- electron-updater checks GitHub Releases on app launch (automatic, silent on no-update)
+- Help > "Check for Updates..." menu item for manual checks with user-facing dialogs:
+  - Update available: shows platform-specific install/download dialog
+  - No update: shows "You're on the latest version" with current version
+  - Error: shows "Unable to check for updates" with error details
+- `manualUpdateCheck` flag distinguishes manual vs automatic checks (automatic stays silent)
 - Windows: Wireshark-style update dialog with Install/Remind/Skip buttons, shows current vs new version
 - macOS: Manual download dialog with link to releases page and `xattr -cr` instructions (no code signing)
 - Triggered by pushing a git tag matching `v*` (e.g., `v1.1.0`)
@@ -230,6 +235,7 @@ Expected: Day 1 ARR=$900,000, NARR=-$100,000. Commission=$0.
 - PSA-MSP: "New Logo" toggle relabeled to "MSP NARR".
 - Color scheme: crimson/navy/grey (matches Tanium brand colors).
 - Section labeled "User Profile" (not "SE Profile").
+- Help > Check for Updates menu item triggers manual update check with user feedback dialogs.
 - Help > About menu shows version and author (Eric Arnst).
 
 ## Uplift Rate Display
@@ -294,6 +300,7 @@ Inline feature within the Deal Calculator (not a separate mode/tab). Users can m
 ### UI
 
 - "+ Add a Deal" button below Deal Details (always visible in deal mode)
+- Deal 1 shows an editable Opportunity Name field in pipeline mode (hidden in single-deal mode, resets to "Deal 1" on exit)
 - Each additional deal is a full-size copy of Deal Details with: Opportunity Name text field, IARR, Renewed ARR, CARR, NARR, New Logo toggle, Multi-Year toggle, L3 Region toggle (dual-measure)
 - Deal boxes have action buttons: move up/down, duplicate, remove (X)
 - "Clear All Deals" button appears when 2+ deals exist
@@ -310,13 +317,15 @@ for each deal:
     running_credit += result.narrQuotaRetirement
 ```
 
+For dual-measure pipeline: L3 and L2 running credits are tracked independently. A deal with "Deal is within L3" toggled off only advances L2 running credit — L3 running credit stays unchanged for subsequent deals. The `result.dealInL3` flag controls this.
+
 ### Per-Deal Inline Results
 
-Each dynamic deal box shows: NARR Retired, Commission, Attainment (pre → post) below its inputs.
+Each dynamic deal box shows: NARR Retired, Commission, Attainment (pre → post) below its inputs. For dual-measure teams, shows both L3 and L2 attainment lines with dynamic measure labels.
 
 ### Commission Breakdown (Pipeline)
 
-When 2+ deals: summary table (#, Name, NARR Retired, Commission, Attainment Pre→Post), pipeline totals, cumulative attainment bar with per-deal color-coded segments. Deal crossing 100% gets accelerator highlight (⚡ badge).
+When 2+ deals: summary table (#, Name, NARR Retired, Commission, Attainment Pre→Post), pipeline totals, cumulative attainment bar with per-deal color-coded segments. Deal crossing 100% gets accelerator highlight (⚡ badge). For dual-measure teams, the Attainment column splits into two columns (one per measure) with independent tracking.
 
 ### Pipeline Interactions
 
@@ -382,6 +391,8 @@ Replaced old `buildAttainmentBar()` with new `buildDealAttainmentBar()`. Single 
 - **Inline styles must use hex colors, NOT CSS variables.** Setting `background:var(--name)` in an HTML `style` attribute causes browsers to invalidate the entire style string, making segments invisible (zero width, transparent background). Always use `BAR_COLORS` constants.
 - **gh-pages CSP must include `'unsafe-inline'` for `style-src`.** Without it, all inline style attributes are blocked, preventing dynamic positioning and sizing of bar segments.
 - **Uplift rate display**: Fields show percentages (e.g., `0.05%`) not raw decimals (`0.0005`). `parseRate()` handles both formats — if the string ends with `%`, divides by 100.
+- **Dynamic deal inputs must include `class="has-prefix"`** on currency fields (IARR, Renewed ARR, CARR, NARR) in `createDealBoxHtml`. Without it, text overlaps the `$` prefix (missing 22px left padding).
+- **Dynamic deal toggle HTML must match Deal 1's nesting.** The `.toggle-field` class must be on a child `<div>` inside `.field`, NOT on the `.field` itself. Putting `toggle-field` on `.field` makes the label, toggle, and span all flex siblings, breaking alignment.
 
 ## Packaging & Distribution
 
@@ -476,6 +487,8 @@ Tab-based mode toggle between "Deal Calculator" (default) and "Annual Projection
 - MY-only NARR: rate = PCR + MY Uplift
 - Both NL+MY NARR: rate = PCR + NL Uplift + MY Uplift
 - Overlap = max(0, newLogoPct + multiYearPct - 1)
+
+Bucket percentages are rounded to 10 decimal places via `.toFixed(10)` to eliminate floating-point noise (e.g., `1e-16` → `0`) that would otherwise cascade through NARR × rate multiplications into scientific notation display values.
 
 Each bucket splits at 100% attainment threshold: below at base rate, above at accelerated rate. Proportional distribution across buckets.
 
