@@ -897,16 +897,16 @@
     // Attainment bar
     if (inputs.dualMeasure) {
       html += buildDealAttainmentBar({
-        segments: [{ startPct: 0, endPct: inputs.l3TargetAttainment * 100, color: 'var(--accent)', label: currentPrimaryLabel + ' (' + (inputs.l3TargetAttainment * 100).toFixed(0) + '%)' }],
+        segments: [{ startPct: 0, endPct: inputs.l3TargetAttainment * 100, color: BAR_COLORS.accent, label: currentPrimaryLabel + ' (' + (inputs.l3TargetAttainment * 100).toFixed(0) + '%)' }],
         title: currentPrimaryLabel + ' Attainment'
       });
       html += buildDealAttainmentBar({
-        segments: [{ startPct: 0, endPct: inputs.l2TargetAttainment * 100, color: 'var(--accent)', label: currentSecondaryLabel + ' (' + (inputs.l2TargetAttainment * 100).toFixed(0) + '%)' }],
+        segments: [{ startPct: 0, endPct: inputs.l2TargetAttainment * 100, color: BAR_COLORS.accent, label: currentSecondaryLabel + ' (' + (inputs.l2TargetAttainment * 100).toFixed(0) + '%)' }],
         title: currentSecondaryLabel + ' Attainment'
       });
     } else {
       html += buildDealAttainmentBar({
-        segments: [{ startPct: 0, endPct: inputs.targetAttainment * 100, color: 'var(--accent)', label: 'Target (' + (inputs.targetAttainment * 100).toFixed(0) + '%)' }],
+        segments: [{ startPct: 0, endPct: inputs.targetAttainment * 100, color: BAR_COLORS.accent, label: 'Target (' + (inputs.targetAttainment * 100).toFixed(0) + '%)' }],
         title: 'NARR Quota Attainment'
       });
     }
@@ -946,6 +946,12 @@
     updateActionButtons();
   }
 
+  const BAR_COLORS = {
+    preDeal: '#3a4a8a',
+    accent: '#751323',
+    accel: '#66bb6a'
+  };
+
   function buildDealAttainmentBar(opts) {
     const segments = opts.segments || [];
     const title = opts.title || '';
@@ -965,7 +971,7 @@
       const left = toLeft(seg.startPct);
       const width = toLeft(seg.endPct) - left;
       if (width > 0) {
-        html += `<div class="deal-bar-segment" style="left:${left}%;width:${width}%;background:${seg.color}" title="${seg.label || ''}"></div>`;
+        html += `<div class="deal-bar-segment" style="left:${left}%;width:${width}%;background-color:${seg.color}" title="${seg.label || ''}"></div>`;
       }
     }
     html += `<div class="deal-bar-threshold" style="left:${toLeft(100)}%"></div>`;
@@ -1004,17 +1010,17 @@
     const postPct = r.postDealAttainment * 100;
 
     if (prePct > 0) {
-      segments.push({ startPct: 0, endPct: prePct, color: 'var(--bar-pre-deal)', label: 'Pre-deal (' + prePct.toFixed(1) + '%)' });
+      segments.push({ startPct: 0, endPct: prePct, color: BAR_COLORS.preDeal, label: 'Pre-deal (' + prePct.toFixed(1) + '%)' });
     }
 
     if (r.narrQuotaRetirement > 0) {
       if (prePct >= 100) {
-        segments.push({ startPct: prePct, endPct: postPct, color: 'var(--bar-accel)', label: 'Deal (accelerated)' });
+        segments.push({ startPct: prePct, endPct: postPct, color: BAR_COLORS.accel, label: 'Deal (accelerated)' });
       } else if (postPct <= 100) {
-        segments.push({ startPct: prePct, endPct: postPct, color: 'var(--accent)', label: 'Deal' });
+        segments.push({ startPct: prePct, endPct: postPct, color: BAR_COLORS.accent, label: 'Deal' });
       } else {
-        segments.push({ startPct: prePct, endPct: 100, color: 'var(--accent)', label: 'Deal (base)' });
-        segments.push({ startPct: 100, endPct: postPct, color: 'var(--bar-accel)', label: 'Deal (accelerated)' });
+        segments.push({ startPct: prePct, endPct: 100, color: BAR_COLORS.accent, label: 'Deal (base)' });
+        segments.push({ startPct: 100, endPct: postPct, color: BAR_COLORS.accel, label: 'Deal (accelerated)' });
       }
     }
 
@@ -1027,17 +1033,17 @@
     const postPct = measure.postDealAttainment * 100;
 
     if (prePct > 0) {
-      segments.push({ startPct: 0, endPct: prePct, color: 'var(--bar-pre-deal)', label: 'Pre-deal (' + prePct.toFixed(1) + '%)' });
+      segments.push({ startPct: 0, endPct: prePct, color: BAR_COLORS.preDeal, label: 'Pre-deal (' + prePct.toFixed(1) + '%)' });
     }
 
     if (measure.commission > 0) {
       if (prePct >= 100) {
-        segments.push({ startPct: prePct, endPct: postPct, color: 'var(--bar-accel)', label: 'Deal (accelerated)' });
+        segments.push({ startPct: prePct, endPct: postPct, color: BAR_COLORS.accel, label: 'Deal (accelerated)' });
       } else if (postPct <= 100) {
-        segments.push({ startPct: prePct, endPct: postPct, color: 'var(--accent)', label: 'Deal' });
+        segments.push({ startPct: prePct, endPct: postPct, color: BAR_COLORS.accent, label: 'Deal' });
       } else {
-        segments.push({ startPct: prePct, endPct: 100, color: 'var(--accent)', label: 'Deal (base)' });
-        segments.push({ startPct: 100, endPct: postPct, color: 'var(--bar-accel)', label: 'Deal (accelerated)' });
+        segments.push({ startPct: prePct, endPct: 100, color: BAR_COLORS.accent, label: 'Deal (base)' });
+        segments.push({ startPct: 100, endPct: postPct, color: BAR_COLORS.accel, label: 'Deal (accelerated)' });
       }
     }
 
@@ -1450,7 +1456,7 @@
     const segments = [];
     const startAtt = allResults[0].preAtt * 100;
     if (startAtt > 0) {
-      segments.push({ startPct: 0, endPct: startAtt, color: 'var(--bar-pre-deal)', label: 'Pre-pipeline (' + startAtt.toFixed(1) + '%)' });
+      segments.push({ startPct: 0, endPct: startAtt, color: BAR_COLORS.preDeal, label: 'Pre-pipeline (' + startAtt.toFixed(1) + '%)' });
     }
     for (let i = 0; i < allResults.length; i++) {
       const dr = allResults[i];
@@ -1477,7 +1483,7 @@
     let running = baseInputs.l2NarrQuotaCredit;
     const startPct = (running / l2Quota) * 100;
     if (startPct > 0) {
-      segments.push({ startPct: 0, endPct: startPct, color: 'var(--bar-pre-deal)', label: 'Pre-pipeline (' + startPct.toFixed(1) + '%)' });
+      segments.push({ startPct: 0, endPct: startPct, color: BAR_COLORS.preDeal, label: 'Pre-pipeline (' + startPct.toFixed(1) + '%)' });
     }
     for (let i = 0; i < allResults.length; i++) {
       const r = allResults[i].result;
