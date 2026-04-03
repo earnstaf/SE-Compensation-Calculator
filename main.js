@@ -53,6 +53,9 @@ ipcMain.handle('pdf:generate', async (_event, htmlString, filenamePrefix) => {
     }
   });
 
+  pdfWin.webContents.on('will-navigate', (e) => e.preventDefault());
+  pdfWin.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+
   try {
     await pdfWin.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(htmlString));
     await new Promise(resolve => setTimeout(resolve, 500));
@@ -103,6 +106,15 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js')
     },
     title: 'Pre-Sales Compensation Calculator'
+  });
+
+  win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        'Content-Security-Policy': ["default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'"]
+      }
+    });
   });
 
   win.loadFile('index.html');

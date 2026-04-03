@@ -1,5 +1,6 @@
 (function () {
   const $ = (id) => document.getElementById(id);
+  const escHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
   const fields = {
     ote: $('ote'),
@@ -183,12 +184,12 @@
   const newLogoToggleLabelSpan = newLogoToggleFieldLabel.childNodes[0]; // text node
 
   function updateDualMeasureLabels(primary, secondary) {
-    currentPrimaryLabel = primary;
-    currentSecondaryLabel = secondary;
+    currentPrimaryLabel = escHtml(primary);
+    currentSecondaryLabel = escHtml(secondary);
     document.querySelectorAll('.dm-primary-label').forEach(el => el.textContent = primary);
     document.querySelectorAll('.dm-secondary-label').forEach(el => el.textContent = secondary);
 
-    // Update the deal-level toggle labels
+    // Update the deal-level toggle labels (textContent is safe, use raw values)
     l3RegionToggleLabelEl.textContent = 'Deal is within ' + primary;
     if (bL3RegionToggleLabelEl) bL3RegionToggleLabelEl.textContent = 'Deal is within ' + primary;
 
@@ -977,7 +978,7 @@
       const left = toLeft(seg.startPct);
       const width = toLeft(seg.endPct) - left;
       if (width > 0) {
-        html += `<div class="deal-bar-segment" style="left:${left}%;width:${width}%;background-color:${seg.color}" title="${seg.label || ''}"></div>`;
+        html += `<div class="deal-bar-segment" style="left:${left}%;width:${width}%;background-color:${seg.color}" title="${escHtml(seg.label || '')}"></div>`;
       }
     }
     html += `<div class="deal-bar-threshold" style="left:${toLeft(100)}%"></div>`;
@@ -1001,7 +1002,7 @@
     if (legendItems.length > 0) {
       html += `<div class="deal-bar-legend">`;
       for (const seg of legendItems) {
-        html += `<span class="deal-bar-legend-item"><span class="deal-bar-swatch" style="background:${seg.color}"></span>${seg.label}</span>`;
+        html += `<span class="deal-bar-legend-item"><span class="deal-bar-swatch" style="background:${seg.color}"></span>${escHtml(seg.label)}</span>`;
       }
       html += `</div>`;
     }
@@ -1444,7 +1445,7 @@
       const rowCls = crossesThreshold ? ' class="pipeline-accel-row"' : '';
       html += `<tr${rowCls}>`;
       html += `<td>${dr.dealNumber}</td>`;
-      html += `<td>${dr.name}</td>`;
+      html += `<td>${escHtml(dr.name)}</td>`;
       html += `<td>${formatDollars(r.narrQuotaRetirement)}</td>`;
       html += `<td>${formatDollars(r.totalCommission)}</td>`;
       if (isDual) {
@@ -1469,7 +1470,7 @@
     // Per-deal detailed breakdown (collapsed by default for multi-deal)
     if (allResults.length <= 3) {
       for (const dr of allResults) {
-        html += `<div class="result-group"><div class="result-group-title">${dr.name} — Detail</div>`;
+        html += `<div class="result-group"><div class="result-group-title">${escHtml(dr.name)} — Detail</div>`;
         if (baseInputs.dualMeasure) {
           html += buildDualMeasureHtml(dr.result, dr.inputs);
         } else {
@@ -1668,7 +1669,7 @@
       rows += buildPdfRow('NARR Retired', formatDollars(r.narrQuotaRetirement));
       rows += buildPdfRow('Commission', formatDollars(r.totalCommission));
       rows += buildPdfRow('Attainment', obfuscate ? h : (dr.preAtt * 100).toFixed(2) + '% → ' + (dr.postAtt * 100).toFixed(2) + '%');
-      dealSections += buildPdfSection(dr.name, rows);
+      dealSections += buildPdfSection(escHtml(dr.name), rows);
       totalNarr += r.narrQuotaRetirement;
       totalComm += r.totalCommission;
     }
