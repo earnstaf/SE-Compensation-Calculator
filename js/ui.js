@@ -649,13 +649,9 @@
     const sLabel = currentSecondaryLabel;
 
     if (r.dealInL3 && r.l3) {
-      const l3Segs = buildMeasureBarSegments(r.l3);
-      console.log('L3 bar segments:', JSON.stringify(l3Segs), 'narrQuotaAttainment:', r.l3.narrQuotaAttainment, 'postDealAttainment:', r.l3.postDealAttainment);
-      html += buildDealAttainmentBar({ segments: l3Segs, title: pLabel + ' Attainment' });
+      html += buildDealAttainmentBar({ segments: buildMeasureBarSegments(r.l3), title: pLabel + ' Attainment' });
     }
-    const l2Segs = buildMeasureBarSegments(r.l2);
-    console.log('L2 bar segments:', JSON.stringify(l2Segs), 'narrQuotaAttainment:', r.l2.narrQuotaAttainment, 'postDealAttainment:', r.l2.postDealAttainment);
-    html += buildDealAttainmentBar({ segments: l2Segs, title: sLabel + ' Attainment' });
+    html += buildDealAttainmentBar({ segments: buildMeasureBarSegments(r.l2), title: sLabel + ' Attainment' });
 
     if (r.dealInL3 && r.l3) {
       html += renderMeasureSection(r.l3, pLabel, 'Primary', inputs, dealNarr);
@@ -958,11 +954,6 @@
     const toLeft = pct => Math.max(0, Math.min(100, (pct / maxPct) * 100));
 
     const milestones = [50, 75, 100, 125, 150].filter(m => m <= maxPct);
-
-    console.log('buildDealAttainmentBar:', title, 'maxEnd:', maxEnd, 'maxPct:', maxPct, 'toLeft(100):', toLeft(100), 'toLeft(125):', toLeft(125), 'segments:', segments.length);
-    for (const seg of segments) {
-      console.log('  seg:', seg.label, 'left:', toLeft(seg.startPct), 'width:', toLeft(seg.endPct) - toLeft(seg.startPct));
-    }
 
     let html = `<div class="deal-attainment-bar">`;
     if (title) html += `<div class="deal-bar-title">${title}</div>`;
